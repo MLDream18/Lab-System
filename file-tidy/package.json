@@ -1,0 +1,41 @@
+{
+  "name": "file-tidy",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.7.2",
+    "crypto-js": "^4.2.0",
+    "docxtemplater": "^3.49.1",
+    "element-plus": "^2.7.6",
+    "file-saver": "^2.0.5",
+    "jquery": "^3.5.1",
+    "jszip": "^3.10.1",
+    "pinia": "^2.1.7",
+    "pizzip": "^3.1.7",
+    "spark-md5": "^3.0.2",
+    "vue": "^3.4.29",
+    "vue-router": "^4.4.0",
+    "vue-simple-uploader": "^1.0.3",
+    "webuploader": "^0.1.8",
+    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^22.5.0",
+    "@types/spark-md5": "^3.0.4",
+    "@vitejs/plugin-vue": "^5.0.5",
+    "sass": "^1.77.8",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.1",
+    "vue-tsc": "^2.0.21"
+  }
+}

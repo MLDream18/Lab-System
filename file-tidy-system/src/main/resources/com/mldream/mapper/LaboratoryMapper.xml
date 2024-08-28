@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mldream.mapper.LaboratoryMapper">
+    <insert id="addLaboratories">
+        insert into laboratory (name) values
+        <foreach collection="laboratoryList" item="lab" separator=",">
+            (#{lab.name})
+        </foreach>
+    </insert>
+    <insert id="addLaboratorySources">
+        insert into laboratory_source (lab_id, week, weekday, section, state, apply_form_id, class_time_id, semester_id) values
+        <foreach collection="laboratorySourceList" item="labSource" separator=",">
+            (#{labSource.labId}, #{labSource.week}, #{labSource.weekday}, #{labSource.section}, #{labSource.state}, #{labSource.applyFormId}, #{labSource.classTimeId}, #{labSource.semesterId})
+        </foreach>
+    </insert>
+    <select id="selectLabSourcesByCondition" resultType="com.mldream.pojo.db.LaboratorySource">
+        select lab_id, weekday, section, ls.state, apply_form_id, class_time_id, ls.semester_id from laboratory_source ls
+        <where>
+            <if test="labId != null">
+                lab_id = #{labId}
+            </if>
+            <if test="startWeek != null and endWeek != null">
+                and week between #{startWeek} and #{endWeek}
+            </if>
+            <if test="startWeekday != null and endWeekday != null">
+                and weekday between #{startWeekday} and #{endWeekday}
+            </if>
+            <if test="startSection != null and endSection != null">
+                and section between #{startSection} and #{endSection}
+            </if>
+            <if test="state != null and state != 0">
+                and ls.state = #{state}
+            </if>
+            <if test="semesterId != null">
+                and ls.semester_id = #{semesterId}
+            </if>
+        </where>
+        group by lab_id, weekday, section, ls.state, apply_form_id, class_time_id, ls.semester_id
+    </select>
+    <select id="selectLabSourcesByClassSchedule" resultType="com.mldream.pojo.db.LaboratorySource">
+        select ls.lab_id, ls.weekday, ls.section, ls.state, ls.apply_form_id, ls.class_time_id, ls.semester_id
+        from laboratory_source ls, laboratory l
+        <where>
+            ls.lab_id = l.id
+            <if test="place != null">
+                and l.name like concat('%', #{place}, '%')
+            </if>
+            <if test="startWeek != null and endWeek != null">
+                and ls.week between #{startWeek} and #{endWeek}
+            </if>
+            <if test="semesterId != null">
+                and ls.semester_id = #{semesterId}
+            </if>
+        </where>
+        group by lab_id, weekday, section, ls.state, apply_form_id, class_time_id, ls.semester_id
+    </select>
+</mapper>

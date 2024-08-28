@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mldream.mapper.SemesterMapper">
+    <insert id="addSemester" useGeneratedKeys="true" keyProperty="id">
+        insert into semester (start_date, end_date, stage, start_year, end_year)
+        values (#{startDate}, #{endDate}, #{stage}, #{startYear}, #{endYear})
+    </insert>
+</mapper>

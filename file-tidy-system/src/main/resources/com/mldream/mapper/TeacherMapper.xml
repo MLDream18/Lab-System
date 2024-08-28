@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mldream.mapper.TeacherMapper">
+    <insert id="addTeachers">
+        insert into teacher(name) values
+        <foreach collection="teacherList" item="teacher" separator=",">
+            (#{teacher.name})
+        </foreach>
+    </insert>
+    <insert id="insertSuggestion">
+        insert into teacher_suggest(course_name_id, teacher_id, lab_id, semester_id, environment_command,
+                                    <if test="appUrl!= null">app_url,</if>
+                                    submit_date)
+            values(#{courseNameId}, #{teacherId}, #{labId}, #{semesterId}, #{environmentCommand},
+                   <if test="appUrl!= null">#{appUrl},</if>
+                   #{submitDate})
+    </insert>
+</mapper>

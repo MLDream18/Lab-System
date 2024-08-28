@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mldream.mapper.ClassScheduleMapper">
+    <select id="selectAllClassSchedules" resultMap="classScheduleList">
+        select *
+        from class_schedule_view
+        where semester = #{semester}
+    </select>
+    <resultMap id="classScheduleList" type="com.mldream.pojo.db.Laboratory">
+        <id property="name" column="labName"/>
+        <collection property="labScheduleList" ofType="com.mldream.pojo.db.ClassScheduleCell">
+<!--            <result property="semester" column="semester"/>-->
+            <result property="classTimeId" column="classTimeId" />
+            <result property="courseName" column="courseName"/>
+            <result property="teacherName" column="teacherName"/>
+            <result property="weekdaySection" column="weekdaySection"/>
+            <result property="startEndWeek" column="startEndWeek"/>
+            <result property="className" column="className"/>
+            <result property="courseNature" column="courseNature"/>
+            <result property="sumCourseHour" column="sumCourseHour"/>
+        </collection>
+    </resultMap>
+</mapper>

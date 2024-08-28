@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mldream.mapper.ExperimentProjectMapper">
+    <insert id="insertBatch">
+        insert into experiment_project (experiment_content, experiment_no,
+                                        lab_id, course_name_id, experiment_category,
+                                        class_ids, experiment_people, experiment_demand,
+                                        experiment_type, experiment_hours, teacher_id, semester_id)
+        values
+        <foreach collection="projectList" item="item" separator=",">
+            (#{item.experimentContent}, #{item.experimentNo}, #{item.labId}, #{item.courseNameId}, #{item.experimentCategory},
+            #{item.classIds}, #{item.experimentPeople}, #{item.experimentDemand}, #{item.experimentType}, #{item.experimentHours},
+             #{item.teacherId}, #{item.semesterId})
+        </foreach>
+    </insert>
+    <select id="selectProjectData" resultType="com.mldream.pojo.vo.ExperimentProjectVO">
+        select * from experiment_project_view
+        <where>
+            <if test="labName != null">
+                lab_name = #{labName}
+            </if>
+            <if test="courseName != null">
+                and course_name like #{courseName}
+            </if>
+            <if test="teacherName != null">
+                and teacher_name like #{teacherName}
+            </if>
+            <if test="classId != null">
+                and class_ids like #{classId}
+            </if>
+            <if test="semester != null">
+                and semester = #{semester}
+            </if>
+        </where>
+    </select>
+</mapper>

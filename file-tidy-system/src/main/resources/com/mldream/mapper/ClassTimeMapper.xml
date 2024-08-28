@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.mldream.mapper.ClassTimeMapper">
+    <insert id="insertClassTimes" useGeneratedKeys="true" keyProperty="id">
+        insert into class_time (weekday, section, start_week, end_week, nature, course_hour, lab_id, course_name_id, teacher_id, class_id, semester_id)
+        values
+        <foreach collection="classTimeList" item="classTime" separator=",">
+            (#{classTime.weekday}, #{classTime.section}, #{classTime.startWeek}, #{classTime.endWeek}, #{classTime.nature}, #{classTime.courseHour}, #{classTime.labId}, #{classTime.courseNameId}, #{classTime.teacherId}, #{classTime.classId}, #{classTime.semesterId})
+        </foreach>
+    </insert>
+
+    <select id="getClassTimeInfo" resultType="com.mldream.pojo.vo.ClassTimeInfoVO">
+        select * from class_schedule_view 
+        where classTimeId in 
+        <foreach collection="classTimeList" item="classTime" separator="," open="(" close=")">
+            ${classTime.id}
+        </foreach>
+    </select>
+</mapper>
