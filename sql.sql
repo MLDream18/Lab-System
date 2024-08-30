@@ -31,36 +31,6 @@ alter table laboratory auto_increment = 1;
 delete teacher_suggest from teacher_suggest where 1;
 alter table teacher_suggest auto_increment = 1;
 
-insert into laboratory(name) values('逸夫楼604');
-
-select * from experiment_project;
-
-select `ep`.`id`                                                             AS `experiment_project_id`,
-       concat(`cs`.`course_serial`, `ep`.`experiment_no`)                    AS `course_serial`,
-       `ep`.`experiment_content`                                             AS `experiment_content`,
-       `ep`.`experiment_no`                                                  AS `experiment_no`,
-       `lab`.`name`                                                          AS `lab_name`,
-       `cn`.`course_name`                                                    AS `course_name`,
-       `ep`.`experiment_category`                                            AS `experiment_category`,
-       `ep`.`class_ids`                                                      AS `class_ids`,
-       `ep`.`experiment_people`                                              AS `experiment_people`,
-       `ep`.`experiment_demand`                                              AS `experiment_demand`,
-       `ep`.`experiment_type`                                                AS `experiment_type`,
-       `ep`.`experiment_hours`                                               AS `experiment_hours`,
-       `t`.`name`                                                            AS `teacher_name`,
-       concat(`sem`.`start_year`, '-', `sem`.`end_year`, '-', `sem`.`stage`) AS `semester`
-from `file_tidy_db`.`experiment_project` `ep`
-         join `file_tidy_db`.`laboratory` `lab`
-         join `file_tidy_db`.`course_name` `cn`
-         join `file_tidy_db`.`teacher` `t`
-         join `file_tidy_db`.`semester` `sem`
-         join `file_tidy_db`.`course_serial` `cs`
-where ((`ep`.`lab_id` = `lab`.`id`) and (`ep`.`course_name_id` = `cn`.`id`) and (`ep`.`teacher_id` = `t`.`id`) and
-       (`ep`.`semester_id` = `sem`.`id`) and (`sem`.`id` = `cs`.`semester_id`) and (`cn`.`id` = `cs`.`course_name_id`))
-group by `ep`.`id`;
-
-drop database file_tidy_db;
-
 create database file_tidy_db;
 
 use file_tidy_db;
@@ -76,6 +46,8 @@ create table admin
         unique (username)
 );
 
+create index idx_username_password on admin(username, password);
+
 create table class
 (
     id         int auto_increment
@@ -85,6 +57,8 @@ create table class
     constraint name
         unique (name)
 );
+
+create index idx_name on class(name);
 
 create table course_name
 (
@@ -130,6 +104,8 @@ create table teacher
     constraint username
         unique (username)
 );
+
+create index idx_username_password on teacher(username, password);
 
 create table course_serial
 (
@@ -310,6 +286,8 @@ from ((((`file_tidy_db`.`apply_form` `af` left join `file_tidy_db`.`laboratory` 
        on ((`af`.`class_id` = `cls`.`id`))) left join `file_tidy_db`.`course_name` `cn`
       on ((`af`.`course_name_id` = `cn`.`id`)));
 
+create index idx_usedLabId_applicantId_classId_courseNameId on apply_form(used_lab_id, applicant_id, class_id, course_name_id);
+
 create view class_schedule_view as
 select `ct`.`id`                                                             AS `classTimeId`,
        `lab`.`name`                                                          AS `labName`,
@@ -333,6 +311,8 @@ where ((`ct`.`lab_id` = `lab`.`id`)
         and `ct`.`class_id` = `cls`.`id`
         and `ct`.`semester_id` = `sem`.`id`;
 
+create index idx_labId_courseNameId_teacherId_classId_semesterId on class_time(lab_id, course_name_id, teacher_id, class_id, semester_id);
+
 create definer = root@localhost view experiment_project_view as
 select `ep`.`id`                                                             AS `experiment_project_id`,
        concat(`cs`.`course_serial`, `ep`.`experiment_no`)                    AS `course_serial`,
@@ -354,9 +334,16 @@ from `file_tidy_db`.`experiment_project` `ep`
          join `file_tidy_db`.`teacher` `t`
          join `file_tidy_db`.`semester` `sem`
          join `file_tidy_db`.`course_serial` `cs`
-where ((`ep`.`lab_id` = `lab`.`id`) and (`ep`.`course_name_id` = `cn`.`id`) and (`ep`.`teacher_id` = `t`.`id`) and
-       (`ep`.`semester_id` = `sem`.`id`) and (`sem`.`id` = `cs`.`semester_id`) and (`cn`.`id` = `cs`.`course_name_id`))
+where ((`ep`.`lab_id` = `lab`.`id`)
+        and (`ep`.`course_name_id` = `cn`.`id`)
+        and (`ep`.`teacher_id` = `t`.`id`)
+        and (`ep`.`semester_id` = `sem`.`id`)
+        and (`sem`.`id` = `cs`.`semester_id`)
+        and (`cn`.`id` = `cs`.`course_name_id`))
 group by `ep`.`id`;
+
+create index idx_labId_courseNameId_teacherId_semesterId on experiment_project(lab_id, course_name_id, teacher_id, semester_id);
+create index idx_semesterId_courseNameId on course_serial(semester_id, course_name_id);
 
 drop table teacher_suggest;
 
@@ -392,4 +379,9 @@ drop view teacher_suggest_view;
 create view teacher_suggest_view as
 select ts.id, cn.course_name, t.name 'teacher_name', lab.name 'lab_name' , concat(sem.start_year, '-', sem.end_year, '-', sem.stage) semester, environment_command, app_url, submit_date, admin_reply, admin_reply_date
 from teacher_suggest ts, course_name cn, teacher t, laboratory lab, semester sem
-where ts.course_name_id = cn.id and ts.teacher_id = t.id and ts.lab_id = lab.id and ts.semester_id = sem.id;
+where ts.course_name_id = cn.id
+    and ts.teacher_id = t.id
+    and ts.lab_id = lab.id
+    and ts.semester_id = sem.id;
+
+create index idx_courseNameId_teacherId_labId_semesterId on teacher_suggest(course_name_id, teacher_id, lab_id, semester_id);
