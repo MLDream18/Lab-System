@@ -117,7 +117,7 @@ public class TeacherApplyHandler extends TextWebSocketHandler {
             // 用户退出，移除缓存
             String sessionId = session.getId();
             params.remove(sessionId);
-            WsSessionManager.remove(JSON.toJSONString(data));
+            WsSessionManager.removeAndClose(JSON.toJSONString(data));
         }
     }
 }

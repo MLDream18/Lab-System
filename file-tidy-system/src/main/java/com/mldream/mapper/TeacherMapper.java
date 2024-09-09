@@ -15,7 +15,7 @@ import java.util.Set;
 public interface TeacherMapper {
 
     @Select("select * from teacher")
-    public List<Teacher> getAllTeachers();
+    List<Teacher> getAllTeachers();
 
     void addTeachers(List<Teacher> teacherList);
 

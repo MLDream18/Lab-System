@@ -18,6 +18,7 @@ import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -34,6 +35,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class TeacherServiceImpl implements TeacherService {
 
     private static final String UPLOAD_PATH = "upload-files/";

@@ -184,7 +184,7 @@ public class AdminClassScheduleHandler extends TextWebSocketHandler {
         if (token != null) {
             // 用户退出，移除缓存
             params.remove(session.getId());
-            WsSessionManager.remove(JSON.toJSONString(data));
+            WsSessionManager.removeAndClose(JSON.toJSONString(data));
         }
     }
 

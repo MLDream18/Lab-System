@@ -5,11 +5,13 @@ import com.mldream.pojo.db.CourseName;
 import com.mldream.service.CourseNameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class CourseNameServiceImpl implements CourseNameService {
 
     @Autowired

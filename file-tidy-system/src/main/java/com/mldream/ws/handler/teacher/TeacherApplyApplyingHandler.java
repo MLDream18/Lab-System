@@ -41,7 +41,8 @@ public class TeacherApplyApplyingHandler extends TextWebSocketHandler {
             WsSessionManager.add(JSON.toJSONString(data), session);
         }
 
-        Claims claims = JwtUtils.parseJwt((String) token);
+//        Claims claims = JwtUtils.parseJwt((String) token);
+        Claims claims = (Claims) session.getAttributes().get("claims");
         Integer teacherId = (Integer) claims.get("id");
         ApplyFormService applyFormService = applicationContext.getBean(ApplyFormService.class);
         List<ApplyFormInfoVO> applyForms = applyFormService.getApplyFormsBySubmitTeacherId(teacherId);
@@ -72,7 +73,7 @@ public class TeacherApplyApplyingHandler extends TextWebSocketHandler {
         data.put("token", token);
         if (token != null) {
             // 用户退出，移除缓存
-            WsSessionManager.remove(JSON.toJSONString(data));
+            WsSessionManager.removeAndClose(JSON.toJSONString(data));
         }
     }
 

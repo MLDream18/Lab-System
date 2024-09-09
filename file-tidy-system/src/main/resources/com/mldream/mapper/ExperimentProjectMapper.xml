@@ -35,5 +35,6 @@
                 and semester = #{semester}
             </if>
         </where>
+        order by teacher_name, experiment_no
     </select>
 </mapper>

@@ -57,3 +57,8 @@ mybatis-plus:
     default-executor-type: reuse
     # 允许 JDBC 支持自动生成主键
     use-generated-keys: true
+
+# 日志配置
+#logging:
+#  level:
+#    org.springframework.jdbc.support.JdbcTransactionManager: debug  # 打印jdbc事务日志

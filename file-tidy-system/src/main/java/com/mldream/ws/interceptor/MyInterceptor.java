@@ -43,6 +43,7 @@ public class MyInterceptor implements HandshakeInterceptor {
                 response.setStatusCode(HttpStatus.FORBIDDEN); // 403
                 return false;
             }
+            attributes.put("claims", claims);
         } catch (Exception e) {
             log.info("用户 token {} 验证失败！", token);
             response.setStatusCode(HttpStatus.UNAUTHORIZED); // 401

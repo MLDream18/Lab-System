@@ -68,7 +68,9 @@ public class AdminApprovalHandler extends TextWebSocketHandler {
             state = 1;
         }
         Map<String, Object> resultMap = new HashMap<>();
+
         ApplyFormMapper applyFormMapper = applicationContext.getBean(ApplyFormMapper.class);
+
         result = applyFormMapper.selectApplyFormInfoSp();
         resultMap.put("result", result);
         resultMap.put("role", role);
@@ -137,7 +139,7 @@ public class AdminApprovalHandler extends TextWebSocketHandler {
             Map<String, Object> keyData = JSON.parseObject(key);
             String page = (String) keyData.get("page");
             if (wsSession.isOpen()) {
-                Claims claims = JwtUtils.parseJwt((String) wsSession.getAttributes().get("token"));
+                Claims claims = (Claims) wsSession.getAttributes().get("claims");
                 String sessionId = wsSession.getId();
                 switch (page) {
                     case "待审批":
@@ -240,7 +242,7 @@ public class AdminApprovalHandler extends TextWebSocketHandler {
         data.put("token", token);
         if (token != null) {
             // 用户退出，移除缓存
-            WsSessionManager.remove(JSON.toJSONString(data));
+            WsSessionManager.removeAndClose(JSON.toJSONString(data));
         }
     }
 }

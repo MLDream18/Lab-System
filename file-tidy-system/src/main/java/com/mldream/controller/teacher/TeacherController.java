@@ -72,19 +72,19 @@ public class TeacherController {
         return Result.success(token);
     }
 
-    @PostMapping("/register")
-    public Result register(@RequestBody TeacherLoginDTO teacherLoginDTO) {
-        String captcha = (String) redisTemplate.opsForValue().get("captcha");
-        if(captcha == null || !captcha.equalsIgnoreCase(teacherLoginDTO.getCaptcha())) {
-            return Result.error("验证码错误");
-        }
-        Teacher teacher = new Teacher();
-        teacher.setUsername(teacherLoginDTO.getUsername());
-        teacher.setPassword(teacherLoginDTO.getPassword());
-        teacher.setName(teacherLoginDTO.getName());
-
-        return teacherService.register(teacher);
-    }
+//    @PostMapping("/register")
+//    public Result register(@RequestBody TeacherLoginDTO teacherLoginDTO) {
+//        String captcha = (String) redisTemplate.opsForValue().get("captcha");
+//        if(captcha == null || !captcha.equalsIgnoreCase(teacherLoginDTO.getCaptcha())) {
+//            return Result.error("验证码错误");
+//        }
+//        Teacher teacher = new Teacher();
+//        teacher.setUsername(teacherLoginDTO.getUsername());
+//        teacher.setPassword(teacherLoginDTO.getPassword());
+//        teacher.setName(teacherLoginDTO.getName());
+//
+//        return teacherService.register(teacher);
+//    }
 
     @GetMapping("/getName")
     public Result getName(@RequestHeader("token") String token) {

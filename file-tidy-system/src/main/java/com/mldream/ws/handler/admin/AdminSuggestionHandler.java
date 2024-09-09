@@ -126,7 +126,7 @@ public class AdminSuggestionHandler extends TextWebSocketHandler {
             // 用户退出，移除缓存
             pageSizes.remove(session.getId());
             currentPages.remove(session.getId());
-            WsSessionManager.remove(JSON.toJSONString(data));
+            WsSessionManager.removeAndClose(JSON.toJSONString(data));
         }
     }
 

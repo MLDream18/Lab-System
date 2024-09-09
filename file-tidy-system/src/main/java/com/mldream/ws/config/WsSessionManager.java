@@ -83,6 +83,8 @@ public class WsSessionManager {
                 } catch (IOException e) {
                     log.error("heartbeat error", e);
                 }
+            } else {
+                removeAndClose(key);
             }
         });
     }

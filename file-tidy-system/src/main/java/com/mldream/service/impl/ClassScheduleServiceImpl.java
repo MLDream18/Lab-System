@@ -8,6 +8,7 @@ import com.mldream.utils.SemesterUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class ClassScheduleServiceImpl implements ClassScheduleService {
 
     @Autowired
@@ -141,7 +143,13 @@ public class ClassScheduleServiceImpl implements ClassScheduleService {
         /* 存储时间表 */
         List<ClassTime> classTimeList = new ArrayList<>();
 //        List<ClassScheduleCell> classScheduleCellList = new ArrayList<>();
-
+        Pattern courseNamePattern = Pattern.compile(regexCourseName.toString());
+        Pattern teacherNamePattern = Pattern.compile(regexTeacherName.toString());
+        Pattern classNamePattern = Pattern.compile(regexClassName.toString());
+        Pattern sectionPattern = Pattern.compile(regexSection);
+        Pattern weekPattern = Pattern.compile(regexWeek);
+        Pattern naturePattern = Pattern.compile(regexNature);
+        Pattern sumTimePattern = Pattern.compile(regexSumTime);
         /* 解析课表 */
         for (int i = 3; i < classScheduleList.size() - 1; i++) {
             List<String> classroomCourse = new ArrayList<>(Arrays.asList(classScheduleList.get(i)));
@@ -158,14 +166,6 @@ public class ClassScheduleServiceImpl implements ClassScheduleService {
                 /* 解析课程名称 JavaEE企业级应用开发刘美玲10304 (1-14周)(03-04节)22软件工程01班考查  总课时:16 */
                 classInfo = classInfo.trim();
                 /* 正则表达式匹配 */
-                Pattern courseNamePattern = Pattern.compile(regexCourseName.toString());
-                Pattern teacherNamePattern = Pattern.compile(regexTeacherName.toString());
-                Pattern classNamePattern = Pattern.compile(regexClassName.toString());
-                Pattern sectionPattern = Pattern.compile(regexSection);
-                Pattern weekPattern = Pattern.compile(regexWeek);
-                Pattern naturePattern = Pattern.compile(regexNature);
-                Pattern sumTimePattern = Pattern.compile(regexSumTime);
-
                 Matcher courseNameMatcher = courseNamePattern.matcher(classInfo);
                 Matcher teacherNameMatcher = teacherNamePattern.matcher(classInfo);
                 Matcher classNameMatcher = classNamePattern.matcher(classInfo);

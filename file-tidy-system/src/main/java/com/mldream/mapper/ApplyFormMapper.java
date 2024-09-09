@@ -1,5 +1,6 @@
 package com.mldream.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.mldream.pojo.db.ApplyForm;
 import com.mldream.pojo.dto.ApplyFormDTO;
 import com.mldream.pojo.vo.ApplyFormInfoVO;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @Mapper
-public interface ApplyFormMapper {
+public interface ApplyFormMapper extends BaseMapper<ApplyForm> {
 
     List<ApplyFormInfoVO> selectApplyFormsDetail(List<ApplyForm> applyFormIds);
 

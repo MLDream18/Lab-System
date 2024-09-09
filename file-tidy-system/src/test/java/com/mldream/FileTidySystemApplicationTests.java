@@ -29,6 +29,7 @@ import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,26 +42,39 @@ class FileTidySystemApplicationTests {
     @Autowired
     private ExperimentProjectMapper experimentProjectMapper;
 
-    @Test
-    public void test() throws IOException {
-        String filePath = "D:/大二下课设/人工智能学院教职工详细信息表2023年11月28日版本 82人.xls";
-
-        // 创建MockMultipartFile对象
-        File file = new File(filePath);
-        FileInputStream input = new FileInputStream(file);
-        MultipartFile multipartFile = new MockMultipartFile("file", file.getName(), "application/vnd.ms-excel", input);
-
-
-        List<String[]> list = ExcelUtils.XLSHandle(multipartFile);
-        list.remove(0); // 移除标题行
-        for (String[] arr : list) {
-            Teacher teacher = new Teacher(arr[1].replace(" ", ""));
-//            int account = Integer.parseInt(arr[2]);
-            teacher.setUsername(arr[2]);
-            teacherMapper.setDefaultAccount(teacher);
-//            System.out.println(Arrays.toString(arr));
-        }
-    }
+//    @Test
+//    public void test() throws IOException {
+//        String filePath = "D:\\大二下课设\\人工智能学院教职工工号2024年4月24日84人.xls";
+//
+//        // 创建MockMultipartFile对象
+//        File file = new File(filePath);
+//        FileInputStream input = new FileInputStream(file);
+//        MultipartFile multipartFile = new MockMultipartFile("file", file.getName(), "application/vnd.ms-excel", input);
+//
+//
+//        List<String[]> list = ExcelUtils.XLSHandle(multipartFile);
+//        List<String> teachers = teacherMapper.getAllTeachers().stream().map(Teacher::getName).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+//        List<Teacher> newTeachers = new ArrayList<>();
+//        list.remove(0); // 移除标题行
+//        list.remove(0); // 移除标题行
+//        for (String[] arr : list) {
+//            Teacher teacher = new Teacher(arr[1].replaceAll(" ", ""));
+//            if(!teachers.contains(teacher.getName())) {
+//                newTeachers.add(teacher);
+//            }
+////            int account = Integer.parseInt(arr[2]);
+////            teacher.setUsername(arr[2]);
+////            teacherMapper.setDefaultAccount(teacher);
+//        }
+//        teacherMapper.addTeachers(newTeachers);
+//        for (String[] arr : list) {
+//            Teacher teacher = new Teacher(arr[1].replaceAll(" ", ""));
+////            int account = Integer.parseInt(arr[2]);
+//            teacher.setUsername(arr[2]);
+//            teacherMapper.setDefaultAccount(teacher);
+////            System.out.println(teacher.getName() + " " + arr[2]);
+//        }
+//    }
 
 //    @Test
 //    public void test2() throws Exception {

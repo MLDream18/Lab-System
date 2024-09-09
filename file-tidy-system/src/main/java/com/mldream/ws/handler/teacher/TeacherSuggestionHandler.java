@@ -74,7 +74,7 @@ public class TeacherSuggestionHandler extends AbstractWebSocketHandler {
 
         String token = (String) session.getAttributes().get("token");
 
-        Claims claims = JwtUtils.parseJwt(token);
+        Claims claims = (Claims) session.getAttributes().get("claims");
         Integer teacherId = (Integer) claims.get("id");
 
 //        String sessionId = session.getId();
@@ -133,7 +133,7 @@ public class TeacherSuggestionHandler extends AbstractWebSocketHandler {
 //            pageSizes.remove(sessionId);
 //            currentPages.remove(sessionId);
             // 用户退出，移除缓存
-            WsSessionManager.remove(JSON.toJSONString(data));
+            WsSessionManager.removeAndClose(JSON.toJSONString(data));
         }
     }
 }

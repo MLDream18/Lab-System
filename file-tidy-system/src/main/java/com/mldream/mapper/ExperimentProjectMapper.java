@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 @Mapper
-public interface ExperimentProjectMapper extends BaseMapper<ExperimentProjectVO> {
+public interface ExperimentProjectMapper {
 
 
     void insertBatch(List<ExperimentProject> projectList);

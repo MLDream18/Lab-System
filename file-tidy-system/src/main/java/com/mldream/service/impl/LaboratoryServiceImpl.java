@@ -11,10 +11,12 @@ import com.mldream.service.ApplyFormService;
 import com.mldream.service.LaboratoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class LaboratoryServiceImpl implements LaboratoryService {
 
     @Autowired

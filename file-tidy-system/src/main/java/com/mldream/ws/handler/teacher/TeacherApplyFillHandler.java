@@ -60,8 +60,8 @@ public class TeacherApplyFillHandler extends TextWebSocketHandler {
         ApplyFormService applyFormService = applicationContext.getBean(ApplyFormService.class);
         ApplyFormDTO applyFormDTO = JSON.parseObject(payload, ApplyFormDTO.class);
 
-        Object token = session.getAttributes().get("token");
-        Claims claims = JwtUtils.parseJwt((String) token);
+//        Claims claims = JwtUtils.parseJwt((String) token);
+        Claims claims = (Claims) session.getAttributes().get("claims");
         applyFormDTO.setSubmitTeacherId((Integer) claims.get("id"));
         if(applyFormDTO.getApplicantCollege().equals("人工智能学院")) {
             applyFormDTO.setState(1);
@@ -82,7 +82,7 @@ public class TeacherApplyFillHandler extends TextWebSocketHandler {
             Map<String, Object> keyData = JSON.parseObject(key);
             String page = (String) keyData.get("page");
             if (wsSession.isOpen()) {
-                claims = JwtUtils.parseJwt((String) wsSession.getAttributes().get("token"));
+                claims = (Claims) wsSession.getAttributes().get("claims");
                 String sessionId = wsSession.getId();
                 switch (page) {
                     case "待审批":
@@ -137,7 +137,7 @@ public class TeacherApplyFillHandler extends TextWebSocketHandler {
         data.put("token", token);
         if (token != null) {
             // 用户退出，移除缓存
-            WsSessionManager.remove(JSON.toJSONString(data));
+            WsSessionManager.removeAndClose(JSON.toJSONString(data));
         }
     }
 

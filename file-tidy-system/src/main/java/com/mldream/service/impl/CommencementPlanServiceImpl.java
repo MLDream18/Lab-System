@@ -5,6 +5,7 @@ import com.mldream.pojo.db.Class;
 import com.mldream.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -13,6 +14,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class CommencementPlanServiceImpl implements CommencementPlanService {
 
     @Autowired

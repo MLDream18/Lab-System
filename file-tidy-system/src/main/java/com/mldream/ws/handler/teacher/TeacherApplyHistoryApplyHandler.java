@@ -47,7 +47,7 @@ public class TeacherApplyHistoryApplyHandler extends TextWebSocketHandler {
         pageSizes.put(sessionId, 10);
         currentPages.put(sessionId, 1);
 
-        Claims claims = JwtUtils.parseJwt((String) token);
+        Claims claims = (Claims) session.getAttributes().get("claims");
         Integer teacherId = (Integer) claims.get("id");
         ApplyFormService applyFormService = applicationContext.getBean(ApplyFormService.class);
         PageBean pageBean = applyFormService.getApplyFormsAppliedBySubmitTeacherId(pageSizes.get(sessionId), currentPages.get(sessionId), teacherId);
@@ -74,7 +74,7 @@ public class TeacherApplyHistoryApplyHandler extends TextWebSocketHandler {
         pageSizes.put(sessionId, (Integer) data.get("pageSize"));
         currentPages.put(sessionId, (Integer) data.get("currentPage"));
 
-        Claims claims = JwtUtils.parseJwt((String) token);
+        Claims claims = (Claims) session.getAttributes().get("claims");
         Integer teacherId = (Integer) claims.get("id");
 
         ApplyFormService applyFormService = applicationContext.getBean(ApplyFormService.class);
@@ -96,7 +96,7 @@ public class TeacherApplyHistoryApplyHandler extends TextWebSocketHandler {
             String sessionId = session.getId();
             pageSizes.remove(sessionId);
             currentPages.remove(sessionId);
-            WsSessionManager.remove(JSON.toJSONString(data));
+            WsSessionManager.removeAndClose(JSON.toJSONString(data));
         }
     }
 }
