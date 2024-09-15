@@ -1,17 +1,16 @@
 <template>
 	<el-main class="main" :style="{'margin-left': !collapse.isCollapse? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)'}">
 		<div
-			style="width: 20%; height: auto; background-color: white; margin-bottom: 1.5%;">
+			style="width: 20%; height: auto; margin-bottom: 1.5%;">
 			<el-segmented v-model="defaultOption" :options="options" block @change="changeOption" style="background-color: white;" />
 		</div>
 		<div
-			style="width: auto; height: auto; background-color: white; padding: 2.5%; margin-bottom: 3%; border-radius: 10px;">
+			style="width: auto; height: auto; background-color: white; padding: 2.5%; margin-bottom: 3%; border-radius: 10px;" class="myHover">
 			<el-table :data="applyInfoCurrentAccount" border style="width: 100%"
 				:cell-style="{ 'textAlign': 'center', 'width': '10px' }"
 				:header-cell-style="{ 'text-align': 'center', 'background-color': 'white', 'color': 'black', 'width': '1vw' }"
 				:row-style="{ 'fontSize': '15px', 'textAlign': 'center', 'width': '10px' }"
 				:row-class-name="tableRowClassName">
-				<el-table-column type="index" label="序号" width="70%" />
 				<el-table-column type="expand">
 					<template #default="props">
 						<div>
@@ -107,6 +106,7 @@
 						</div>
 					</template>
 				</el-table-column>
+				<el-table-column type="index" label="序号" width="70%" />
 				<el-table-column label="提交日期" prop="submitDate" />
 				<el-table-column label="申请人姓名" prop="applicant" />
 				<el-table-column label="申请实验室" prop="labName" />
@@ -125,11 +125,12 @@
 
 <script lang="ts" setup>
 // import axios from 'axios';
-import { ElMessage } from 'element-plus';
-import {  ref } from 'vue'
+import {  onBeforeUnmount, ref } from 'vue'
 import router from '../../../router';
-import { useCollapseStore } from '../../../stores/store'; 
+import { useCollapseStore, useWebSocketStoreTeacher } from '../../../stores/store'; 
+import { init } from '../../../utils/ws';
 
+const webSocketStore = useWebSocketStoreTeacher();
 const collapse = useCollapseStore();
 
 const defaultOption = '正在审批'
@@ -143,8 +144,7 @@ const changeOption = () => {
 
 // const parentBorder = ref(false)
 // const childBorder = ref(false)
-const token = `${localStorage.getItem('token')}`;
-var ws = new WebSocket('/ws/teacher/apply/applying', [token]);
+var ws: any = null;
 const applyInfoCurrentAccount = ref<any[]>([]);
 const states = ['空闲', '正常上课', '调课', '补课', '培训', '竞赛', '考试', '课程设计', '其他'];
 
@@ -236,14 +236,9 @@ const combinedWeekAndSection = (week: string, section: string) => {
 	return `${week}:${section}`;
 }
 
-ws.onmessage = (e: any) => {
-	if(e.data === 'heartbeat') {
-        ws.send('heartbeatAsk');
-        return;
-    }
+const handleMessage = (data: any) => {
+	webSocketStore.setWsApplyingData(data);
 	/* 获取当前账号的申请信息 参数1: 当前登录用户的id 参数2: 学期id */
-	let data = JSON.parse(e.data).data;
-	// console.log(e.data);
 	if (data) {
 		/* 过滤掉审核状态为2的申请信息 */
 		applyInfoCurrentAccount.value = data.filter((item: any) => {
@@ -263,31 +258,37 @@ ws.onmessage = (e: any) => {
 	}
 }
 
-ws.onerror = (e: any) => {
-	// console.log(e);
-	if (e.target.readyState === WebSocket.CLOSED) {
-		fetch(`/ws/teacher/apply/applying`, {
-			headers: {
-				'Sec-WebSocket-Protocol': token,
-			}
-		}).then(res => {
-			if (res.status === 401) {
-				// console.log('登录已过期，请重新登录');
-				ElMessage.error('NOT_LOGIN');
-				// 提示用户重新登录
-				router.push('/login');
-			} else {
-				ElMessage.error('服务器出错，请联系管理员');
-			}
-		})
-	}
+// if(!webSocketStore.wsApplying.ws) {
+ws = init('/ws/teacher/apply/applying');
+// 	webSocketStore.setWsApplyingWs(ws);
+// } else {
+// 	ws = webSocketStore.wsApplying.ws;
+// 	handleMessage(webSocketStore.wsApplying.data);
+// }
+
+ws.onmessage = (e: any) => {
+	if(e.data === 'heartbeat') {
+        ws.send('heartbeatAsk');
+        return;
+    }
+	let data = JSON.parse(e.data).data;
+	handleMessage(data);
 }
 
+// ws.onerror = (e: any) => {
+// 	console.log(e);
+// }
+
+
+
 /* 路由跳转前将websocket关闭 */
-router.beforeEach((_to, _from, next) => {
-	ws.close();
-	next();
-});
+// router.beforeEach((_to, _from, next) => {
+// 	ws.close();
+// 	next();
+// });
+onBeforeUnmount(() => {
+	ws?.close();
+})
 
 </script>
 

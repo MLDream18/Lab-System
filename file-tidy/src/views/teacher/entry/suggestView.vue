@@ -2,7 +2,7 @@
     <el-main class="main" :style="{'margin-left': !collapse.isCollapse? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)'}">
         <div
             style="width: auto; height: auto; background-color: white; padding: 1%; margin-bottom: 3%; border-radius: 10px;">
-            <h3 style="text-align: center;">本科实验教学环境需求及软件上传</h3>
+            <h3 style="text-align: center;">本科实验教学环境需求</h3>
             <el-divider></el-divider>
             <el-form ref="suggestionFormRef" :model="suggestionForm" label-width="auto">
                 <el-form-item label="学期：" :prop="`semesterId`">
@@ -33,15 +33,15 @@
                     <el-input type="textarea" v-model="suggestionForm.environmentCommand"
                         placeholder="留言"></el-input>
                 </el-form-item>
-                <el-form-item label="上传文件：" :prop="`file`">
+                <!--<el-form-item label="上传文件：" :prop="`file`">
                     <el-switch v-model="isUploadFile" class="mt-2" style="margin-left: 24px" inline-prompt :disabled="uploading"
                         :active-icon="Check" :inactive-icon="Close" />
                 </el-form-item>
                 <div v-if="isUploadFile"
                     style="width: auto; border: 1px solid #ddd; border-radius: 10px; padding: 1%; margin-bottom: 1%;">
-                    <!-- 分片上传组件 -->
+                     分片上传组件 
                     <WebUpload ref="webUpload"></WebUpload>
-                </div>
+                </div>-->
             </el-form>
             <el-divider></el-divider>
             <div style="width: 100%; display: inline-flex; align-items: center; justify-content: center;">
@@ -54,8 +54,6 @@
             <h4>tips：</h4>
             <el-text>
                 1.对于实验室有什么建议或者要求，可以在此留言。
-                <br />
-                2.需要安装什么软件，可以上传软件安装包。
             </el-text>
         </div>
         <!-- <div
@@ -110,14 +108,12 @@
 </template>
 
 <script lang="ts" setup>
-import WebUpload from '../../upload/uploadView.vue'
-import { Check, Close } from '@element-plus/icons-vue'
-import { onMounted, reactive, ref } from 'vue'
-import router from "../../../router"
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import {  ElMessage, FormInstance } from "element-plus";
 import { useCollapseStore } from '../../../stores/store';
+import { init } from '../../../utils/ws';
 
-const basicData = JSON.parse(`${localStorage.getItem('basic-data')}`);
+const basicData = JSON.parse(`${localStorage.getItem('teacherBasicData')}`);
 
 const collapse = useCollapseStore();
 
@@ -125,8 +121,7 @@ const webUpload = ref();
 
 const isUploadFile = ref(false); // 是否上传文件
 
-const token = `${localStorage.getItem('token')}`;
-const ws = new WebSocket(`/ws/teacher/suggestions`, [token]);
+var ws: any = null;
 
 const semesterList = ref<any[]>([]); // 学期列表
 const courseNames = ref<any[]>([]); // 课程名称列表
@@ -178,7 +173,14 @@ const submitUploadForm = (formEl: FormInstance | undefined) => {
     });
 }
 
-ws.onmessage = (e) => {
+// if(!webSocketStore.wsSuggestion.ws) {
+ws = init(`/ws/teacher/suggestions`);
+//     webSocketStore.setWsSuggestionWs(ws);
+// } else {
+//     ws = webSocketStore.wsSuggestion.ws;
+// }
+
+ws.onmessage = (e: any) => {
     if (e.data === 'heartbeat') {
         ws.send('heartbeatAsk');
         return;
@@ -192,24 +194,25 @@ ws.onmessage = (e) => {
 
 }
 
-ws.onerror = (e: any) => {
-    if (e.target.readyState === WebSocket.CLOSED) {
-        fetch(`/ws/teacher/suggestions`, {
-            headers: {
-                'Sec-WebSocket-Protocol': token,
-            }
-        }).then(res => {
-            if (res.status === 401) {
-                // console.log('登录已过期，请重新登录');
-                ElMessage.error('NOT_LOGIN');
-                // 提示用户重新登录
-                router.push('/login');
-            } else {
-                ElMessage.error('服务器出错，请联系管理员');
-            }
-        })
-    }
-}
+// ws.onerror = (e: any) => {
+//     if (e.target.readyState === WebSocket.CLOSED) {
+//         fetch(`/ws/teacher/suggestions`, {
+//             headers: {
+//                 'Sec-WebSocket-Protocol': token,
+//             }
+//         }).then(res => {
+//             if (res.status === 401) {
+//                 console.log(token);
+//                 // console.log('登录已过期，请重新登录');
+//                 ElMessage.error('NOT_LOGIN');
+//                 // 提示用户重新登录
+//                 router.push('/login');
+//             } else {
+//                 ElMessage.error('服务器出错，请联系管理员');
+//             }
+//         })
+//     }
+// }
 
 const validateCourseName = (_rule: any, value: any, callback: any) => {
     if (!value || value === '') {
@@ -307,9 +310,12 @@ onMounted(async () => {
 });
 
 /* 路由跳转前将websocket关闭 */
-router.beforeEach((_to, _from, next) => {
-    ws.close();
-    next();
+// router.beforeEach((_to, _from, next) => {
+//     ws.close();
+//     next();
+// });
+onBeforeUnmount(() => {
+    ws?.close();
 });
 
 </script>

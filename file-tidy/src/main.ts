@@ -13,7 +13,7 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 const app = createApp(App);
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component)
+    app.component(key, component)
 }
 const pinia = createPinia();
 // 全局方法挂载
@@ -22,9 +22,13 @@ app.config.globalProperties.$dragTable = dragTable;
 axios.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const token = localStorage.getItem('token');
+        // const csrfToken = localStorage.getItem('csrfToken');
         if (token) {
             config.headers['token'] = `${token}`;
         }
+        // if (csrfToken) {
+        //     config.headers['X-CSRF-TOKEN'] = `${csrfToken}`;
+        // }
         return config;
     },
     (error) => {
@@ -35,8 +39,8 @@ axios.interceptors.request.use(
 // 响应拦截器
 axios.interceptors.response.use(
     (response: AxiosResponse) => {
-        if(response.data.code === 0) {
-            if(response.data.msg !== 'NOT_LOGIN') {
+        if (response.data.code === 0) {
+            if (response.data.msg !== 'NOT_LOGIN') {
                 /* 不跳转 */
                 ElMessage.error(response.data.msg);
                 return Promise.reject(response);

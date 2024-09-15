@@ -2,6 +2,7 @@ package com.mldream.controller.teacher;
 
 import com.alibaba.fastjson2.JSON;
 import com.mldream.mapper.ApplyFormMapper;
+import com.mldream.mapper.TeacherMapper;
 import com.mldream.pojo.dto.TeacherLoginDTO;
 import com.mldream.pojo.vo.Result;
 import com.mldream.pojo.db.Teacher;
@@ -46,6 +47,9 @@ public class TeacherController {
     @Autowired
     private ApplyFormMapper applyFormMapper;
 
+    @Autowired
+    private TeacherMapper teacherMapper;
+
     @PostMapping("/login")
     public Result login(@RequestBody TeacherLoginDTO teacherLoginDTO) {
         String captcha = (String) redisTemplate.opsForValue().get("captcha");
@@ -89,8 +93,9 @@ public class TeacherController {
     @GetMapping("/getName")
     public Result getName(@RequestHeader("token") String token) {
         Claims claims = JwtUtils.parseJwt(token);
-        String teachName = (String) claims.get("name");
-        return Result.success(teachName);
+        Integer id = (Integer) claims.get("id");
+        Teacher teacher = teacherMapper.selectById(id);
+        return Result.success(teacher.getName());
     }
 
     @PostMapping("/uploadFile")

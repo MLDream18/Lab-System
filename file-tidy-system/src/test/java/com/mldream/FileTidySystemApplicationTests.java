@@ -1,10 +1,13 @@
 package com.mldream;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mldream.mapper.ExperimentProjectMapper;
 import com.mldream.mapper.TeacherMapper;
+import com.mldream.pojo.db.Admin;
 import com.mldream.pojo.db.Teacher;
+import com.mldream.pojo.dto.User;
 import com.mldream.pojo.vo.ExperimentProjectVO;
 import com.mldream.pojo.vo.PageBean;
 import com.mldream.utils.ExcelUtils;
@@ -18,10 +21,13 @@ import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.StorageClass;
 import com.qcloud.cos.*;
 import com.qcloud.cos.region.Region;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
@@ -33,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @SpringBootTest
 class FileTidySystemApplicationTests {
 
@@ -42,38 +49,61 @@ class FileTidySystemApplicationTests {
     @Autowired
     private ExperimentProjectMapper experimentProjectMapper;
 
-//    @Test
-//    public void test() throws IOException {
-//        String filePath = "D:\\大二下课设\\人工智能学院教职工工号2024年4月24日84人.xls";
-//
-//        // 创建MockMultipartFile对象
-//        File file = new File(filePath);
-//        FileInputStream input = new FileInputStream(file);
-//        MultipartFile multipartFile = new MockMultipartFile("file", file.getName(), "application/vnd.ms-excel", input);
-//
-//
-//        List<String[]> list = ExcelUtils.XLSHandle(multipartFile);
-//        List<String> teachers = teacherMapper.getAllTeachers().stream().map(Teacher::getName).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-//        List<Teacher> newTeachers = new ArrayList<>();
-//        list.remove(0); // 移除标题行
-//        list.remove(0); // 移除标题行
-//        for (String[] arr : list) {
-//            Teacher teacher = new Teacher(arr[1].replaceAll(" ", ""));
-//            if(!teachers.contains(teacher.getName())) {
-//                newTeachers.add(teacher);
-//            }
-////            int account = Integer.parseInt(arr[2]);
-////            teacher.setUsername(arr[2]);
-////            teacherMapper.setDefaultAccount(teacher);
-//        }
-//        teacherMapper.addTeachers(newTeachers);
-//        for (String[] arr : list) {
-//            Teacher teacher = new Teacher(arr[1].replaceAll(" ", ""));
-////            int account = Integer.parseInt(arr[2]);
+    @Test
+    public void test() throws IOException {
+        String filePath = "D:\\大二下课设\\人工智能学院教职工工号2024年4月24日84人.xls";
+
+        // 创建MockMultipartFile对象
+        File file = new File(filePath);
+        FileInputStream input = new FileInputStream(file);
+        MultipartFile multipartFile = new MockMultipartFile("file", file.getName(), "application/vnd.ms-excel", input);
+
+
+        List<String[]> list = ExcelUtils.XLSHandle(multipartFile);
+        List<String> teachers = teacherMapper.getAllTeachers().stream().map(Teacher::getName).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        List<Teacher> newTeachers = new ArrayList<>();
+        list.remove(0); // 移除标题行
+        list.remove(0); // 移除标题行
+        for (String[] arr : list) {
+            Teacher teacher = new Teacher(arr[1].replaceAll(" ", ""));
+            if(!teachers.contains(teacher.getName())) {
+                newTeachers.add(teacher);
+            }
+//            int account = Integer.parseInt(arr[2]);
 //            teacher.setUsername(arr[2]);
 //            teacherMapper.setDefaultAccount(teacher);
-////            System.out.println(teacher.getName() + " " + arr[2]);
+        }
+        if(!newTeachers.isEmpty()) {
+            teacherMapper.addTeachers(newTeachers);
+        }
+        for (String[] arr : list) {
+            Teacher teacher = new Teacher(arr[1].replaceAll(" ", ""));
+//            int account = Integer.parseInt(arr[2]);
+            teacher.setUsername(arr[2]);
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+            String password = encoder.encode("123456");
+            teacher.setPassword(password);
+//            log.info("teacher: {}", teacher);
+            teacherMapper.setDefaultAccount(teacher);
+//            log.info("teacherPassword: {}", encoder.matches("123456",teacher.getPassword()));
+//            System.out.println(teacher.getName() + " " + arr[2]);
+        }
+    }
+
+//    @Autowired
+//    private BaseMapper<Admin> adminMapper;
+//
+//    @Test
+//    public void test1() throws Exception {
+//        List<Admin> admins = adminMapper.selectList(null);
+//        for (Admin admin : admins) {
+//            teacherMapper.insertUser(User.builder().username(admin.getUsername()).password(admin.getPassword()).role("admin").userId(admin.getId()).build());
 //        }
+//        teacherMapper.selectList(null).forEach(item -> {
+//            if(item.getUsername() != null && !item.getUsername().isEmpty()) {
+//                teacherMapper.insertUser(User.builder().username(item.getUsername()).password(item.getPassword()).role("teacher").userId(item.getId()).build());
+//            }
+//        });
 //    }
 
 //    @Test

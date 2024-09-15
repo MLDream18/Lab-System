@@ -1,17 +1,17 @@
 <template>
-	<el-main class="main" :style="{'margin-left': !collapse.isCollapse? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)'}">
-		<div
-			style="width: 20%; height: auto; background-color: white; margin-bottom: 1.5%;">
-			<el-segmented v-model="defaultOption" :options="options" block @change="changeOption" style="background-color: white;" />
+	<el-main class="main"
+		:style="{ 'margin-left': !collapse.isCollapse ? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)' }">
+		<div style="width: 20%; height: auto; margin-bottom: 1.5%;">
+			<el-segmented v-model="defaultOption" :options="options" block @change="changeOption"
+				style="background-color: white;" />
 		</div>
-		<div
-			style="width: auto; height: auto; background-color: white; padding: 2.5%; margin-bottom: 3%; border-radius: 10px;">
+		<div style="width: auto; height: auto; background-color: white; padding: 2.5%; margin-bottom: 3%; border-radius: 10px;"
+			class="myHover">
 			<el-table :data="applyInfoCurrentAccount" border style="width: 100%"
 				:cell-style="{ 'textAlign': 'center', 'width': '10px' }"
 				:header-cell-style="{ 'text-align': 'center', 'background-color': 'white', 'color': 'black', 'width': '1vw' }"
 				:row-style="{ 'fontSize': '15px', 'textAlign': 'center', 'width': '10px' }"
 				:row-class-name="tableRowClassName">
-				<el-table-column type="index" label="序号" width="70%" />
 				<el-table-column type="expand">
 					<template #default="props">
 						<div>
@@ -22,8 +22,7 @@
 							<div style="display: inline-flex; width: 100%;">
 								<div style="width: 50%;">
 									<h2>申请信息</h2>
-									<el-descriptions border :column="1"
-										style="margin-bottom: 20px; width: 100%;">
+									<el-descriptions border :column="1" style="margin-bottom: 20px; width: 100%;">
 										<el-descriptions-item label-align="left" label="实验内容：" width="15%">
 											{{ props.row.experimentContent }}
 										</el-descriptions-item>
@@ -79,14 +78,13 @@
 											<h4 v-else-if="props.row.state === 1" style="color: #409EFF;">
 												审批单位审核中
 											</h4>
-											<h4 v-else-if="props.row.state === 2"
-												style="color: rgb(103, 194, 58);">审批单位审核通过✅</h4>
+											<h4 v-else-if="props.row.state === 2" style="color: rgb(103, 194, 58);">
+												审批单位审核通过✅</h4>
 											<h4 v-else-if="props.row.state === -2" style="color: red;">
 												审批单位审核未通过❌</h4>
 											<p v-if="props.row.state >= -1 && props.row.state < 2"
 												style="color: white;"></p>
-											<p v-else-if="props.row.state === 2"
-												style="color: rgb(103, 194, 58);">
+											<p v-else-if="props.row.state === 2" style="color: rgb(103, 194, 58);">
 												审核人：{{ props.row.approvalOpinionName }}
 												处理时间： {{ props.row.approvalOpinionDate }}
 											</p>
@@ -98,8 +96,8 @@
 										<el-timeline-item :class="timeLineClass(props.row.state, 3)"
 											:color="timeLineItemColor(props.row.state, 3)" center>
 											<h4 v-if="props.row.state !== 2" style="color: white;">同意申请</h4>
-											<h4 v-else-if="props.row.state === 2"
-												style="color: rgb(103, 194, 58);">同意申请✅</h4>
+											<h4 v-else-if="props.row.state === 2" style="color: rgb(103, 194, 58);">
+												同意申请✅</h4>
 										</el-timeline-item>
 									</el-timeline>
 								</div>
@@ -107,6 +105,7 @@
 						</div>
 					</template>
 				</el-table-column>
+				<el-table-column type="index" label="序号" width="70%" />
 				<el-table-column label="提交日期" prop="submitDate" />
 				<el-table-column label="申请人姓名" prop="applicant" />
 				<el-table-column label="申请实验室" prop="labName" />
@@ -125,8 +124,8 @@
 				style="width: 100%; margin-top: 1%; display: inline-flex; justify-content: center; align-items: center;">
 				<el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
 					:page-sizes="[10, 20, 50, 100]" :size="size" :disabled="disabled" :background="true"
-					layout="total, sizes, prev, pager, next, jumper" :total="total"
-					@size-change="handleSizeChange" @current-change="handleCurrentPageChange" />
+					layout="total, sizes, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange"
+					@current-change="handleCurrentPageChange" />
 			</div>
 		</div>
 	</el-main>
@@ -135,10 +134,12 @@
 <script lang="ts" setup>
 // import axios from 'axios';
 import { ComponentSize, ElMessage } from 'element-plus';
-import { ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import router from '../../../router';
-import { useCollapseStore } from '../../../stores/store';
+import { useCollapseStore, useWebSocketStoreTeacher } from '../../../stores/store';
+import { init } from '../../../utils/ws';
 
+const webSocketStore = useWebSocketStoreTeacher();
 const collapse = useCollapseStore();
 
 const defaultOption = '历史申请'
@@ -152,8 +153,7 @@ const changeOption = () => {
 
 // const parentBorder = ref(false)
 // const childBorder = ref(false)
-const token = `${localStorage.getItem('token')}`;
-var ws = new WebSocket('/ws/teacher/apply/historyApply', [token]);
+var ws: any = null;
 const applyInfoCurrentAccount = ref<any[]>([]);
 const states = ['空闲', '正常上课', '调课', '补课', '培训', '竞赛', '考试', '课程设计', '其他'];
 
@@ -164,10 +164,14 @@ const currentPage = ref(1) // 当前页
 const total = ref(0) // 总条数
 
 const refresh = () => {
-	ws.send(JSON.stringify({
-		pageSize: pageSize.value,
-		currentPage: currentPage.value,
-	}));
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws.send(JSON.stringify({
+			pageSize: pageSize.value,
+			currentPage: currentPage.value,
+		}));
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 }
 
 const handleSizeChange = (val: number) => {
@@ -275,14 +279,8 @@ const combinedWeekAndSection = (week: string, section: string) => {
 	return `${week}:${section}`;
 }
 
-ws.onmessage = (e: any) => {
-	if(e.data === 'heartbeat') {
-        ws.send('heartbeatAsk');
-        return;
-    }
-	/* 获取当前账号的申请信息 参数1: 当前登录用户的id 参数2: 学期id */
-	let data = JSON.parse(e.data).data;
-	// console.log(data);
+const handleMessage = (data: any) => {
+	webSocketStore.setWsHistoryData(data);
 	if (data) {
 		/* 过滤掉审核状态为2的申请信息 */
 		applyInfoCurrentAccount.value = data.rows.map((item: any) => {
@@ -300,34 +298,54 @@ ws.onmessage = (e: any) => {
 		});
 		total.value = data.total;
 	}
-	// console.log(applyInfoCurrentAccount.value);
 }
 
-ws.onerror = (e: any) => {
-	// console.log(e);
-	if (e.target.readyState === WebSocket.CLOSED) {
-		fetch(`/ws/teacher/apply`, {
-			headers: {
-				'Sec-WebSocket-Protocol': token,
-			}
-		}).then(res => {
-			if (res.status === 401) {
-				// console.log('登录已过期，请重新登录');
-				ElMessage.error('NOT_LOGIN');
-				// 提示用户重新登录
-				router.push('/login');
-			} else {
-				ElMessage.error('服务器出错，请联系管理员');
-			}
-		})
+// if (!webSocketStore.wsHistory.ws) {
+ws = init('/ws/teacher/apply/historyApply');
+	// webSocketStore.setWsHistoryWs(ws);
+// } else {
+// 	ws = webSocketStore.wsHistory.ws;
+// 	handleMessage(webSocketStore.wsHistory.data);
+// }
+
+ws.onmessage = (e: any) => {
+	if (e.data === 'heartbeat') {
+		ws.send('heartbeatAsk');
+		return;
 	}
+	/* 获取当前账号的申请信息 参数1: 当前登录用户的id 参数2: 学期id */
+	let data = JSON.parse(e.data).data;
+	handleMessage(data);
 }
+
+// ws.onerror = (e: any) => {
+// 	// console.log(e);
+// 	if (e.target.readyState === WebSocket.CLOSED) {
+// 		fetch(`/ws/teacher/apply`, {
+// 			headers: {
+// 				'Sec-WebSocket-Protocol': token,
+// 			}
+// 		}).then(res => {
+// 			if (res.status === 401) {
+// 				// console.log('登录已过期，请重新登录');
+// 				ElMessage.error('NOT_LOGIN');
+// 				// 提示用户重新登录
+// 				router.push('/login');
+// 			} else {
+// 				ElMessage.error('服务器出错，请联系管理员');
+// 			}
+// 		})
+// 	}
+// }
 
 /* 路由跳转前将websocket关闭 */
-router.beforeEach((_to, _from, next) => {
-	ws.close();
-	next();
-});
+// router.beforeEach((_to, _from, next) => {
+// 	ws.close();
+// 	next();
+// });
+onBeforeUnmount(() => {
+	ws?.close();
+})
 
 </script>
 

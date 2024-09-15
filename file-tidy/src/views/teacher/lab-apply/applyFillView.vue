@@ -1,13 +1,14 @@
 <template>
-    <el-main class="main" :style="{'margin-left': !collapse.isCollapse? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)'}">
+    <el-main class="main"
+        :style="{ 'margin-left': !collapse.isCollapse ? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)' }">
         <div
             style="width: auto; height: auto; background-color: white; padding: 2.5%; margin-bottom: 3%; border-radius: 10px;">
             <el-form ref="formRef" style="margin: auto auto auto auto; max-width: 50%;
-                border: 1px solid black; border-radius: 10px; padding: 2.5%;" status-icon
-                :model="dynamicValidateForm" label-width="auto" class="demo-dynamic">
+                border: 1px solid black; border-radius: 10px; padding: 2.5%;" status-icon :model="dynamicValidateForm"
+                label-width="auto" class="demo-dynamic">
                 <div style="width: 100%; text-align: center; margin-top: -2.5%;">
-					<h2>申请信息填写</h2>
-				</div>
+                    <h2>申请信息填写</h2>
+                </div>
                 <div style="width: 100%;">
                     <el-form-item :prop="`lab`" label="使用教室：" :rules="[
                         { validator: validateClassroom, trigger: 'blur' }
@@ -50,8 +51,7 @@
                             </el-popover>
                         </div>
                     </div>
-                    <div v-for="(domain, index) in dynamicValidateForm.domains" :key="index"
-                        style="width: 100%;">
+                    <div v-for="(domain, index) in dynamicValidateForm.domains" :key="index" style="width: 100%;">
                         <el-form-item label="使用周次：" :prop="`domains.${index}.week`" :rules="[
                             { validator: validateWeek, trigger: 'blur' },
                         ]">
@@ -80,8 +80,8 @@
                         label="label" placeholder="申请事由" />
                 </el-form-item>
                 <el-form-item label="课程名称：" :prop="`courseNameId`">
-                    <el-select-v2 v-model="dynamicValidateForm.courseNameId" filterable clearable
-                        :options="courseNames" value="value" label="label" placeholder="选填" />
+                    <el-select-v2 v-model="dynamicValidateForm.courseNameId" filterable clearable :options="courseNames"
+                        value="value" label="label" placeholder="选填" />
                 </el-form-item>
                 <el-form-item label="实验内容：" :prop="`experimentContent`" :rules="[
                     { validator: validateExperimentContent, trigger: 'blur' }
@@ -90,8 +90,8 @@
                         type="textarea" />
                 </el-form-item>
                 <el-form-item label="班级：" :prop="`classId`">
-                    <el-select-v2 v-model="dynamicValidateForm.classId" filterable clearable
-                        :options="classList" value="value" label="label" placeholder="选填" />
+                    <el-select-v2 v-model="dynamicValidateForm.classId" filterable clearable :options="classList"
+                        value="value" label="label" placeholder="选填" />
                 </el-form-item>
                 <el-form-item label="实验人数：" :prop="`experimentPeople`" :rules="[
                     { validator: validateExperimentPeople, trigger: 'blur' }
@@ -101,8 +101,8 @@
                 <el-form-item label="申请人：" :prop="`applicantId`" :rules="[
                     { validator: validateApplicant, trigger: 'change' }
                 ]">
-                    <el-select-v2 v-model="dynamicValidateForm.applicantId" filterable clearable
-                        :options="teacherList" placeholder="申请人" />
+                    <el-select-v2 v-model="dynamicValidateForm.applicantId" filterable clearable :options="teacherList"
+                        placeholder="申请人" />
                 </el-form-item>
                 <el-form-item label="联系电话：" :prop="`phone`" :rules="[
                     { validator: validatePhone, trigger: 'blur' },
@@ -117,8 +117,8 @@
                 </el-form-item>
                 <el-form-item>
                     <div style="width: 100%; display: inline-flex; justify-content: flex-end;">
-                        <el-button type="primary" @click="submitForm(formRef)">Submit</el-button>
-                        <el-button @click="resetForm(formRef)">Reset</el-button>
+                        <el-button type="primary" @click="submitForm(formRef)">提交</el-button>
+                        <el-button @click="resetForm(formRef)">重置</el-button>
                     </div>
                 </el-form-item>
             </el-form>
@@ -127,20 +127,20 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useCollapseStore } from '../../../stores/store';
+import { init } from '../../../utils/ws';
 
-const basicData = JSON.parse(`${localStorage.getItem('basic-data')}`);
+const basicData = JSON.parse(`${localStorage.getItem('teacherBasicData')}`);
 
 const collapse = useCollapseStore();
 
 const route = useRoute();
-const router = useRouter();
 
-const token = `${localStorage.getItem('token')}`;
-var ws = new WebSocket('/ws/teacher/apply/fill', [token]);
+var ws = init('/ws/teacher/apply/fill');
+
 // const bc = new BroadcastChannel('teacher-apply'); // 申请广播
 const regex = /(10102|10304|10506|10708|10910|20102|20304|20506|20708|20910|30102|30304|30506|30708|30910|40102|40304|40506|40708|40910|50102|50304|50506|50708|50910|60102|60304|60506|60708|60910|70102|70304|70506|70708|70910)/i
 const formRef = ref<FormInstance>()
@@ -388,6 +388,10 @@ const validateCollege = (_rule: any, value: any, callback: any) => {
 };
 
 const removeDomain = (item: DomainItem) => {
+    if (dynamicValidateForm.domains.length === 1) {
+		ElMessage.error('时间段至少要有一个');
+		return;
+	}
     const index = dynamicValidateForm.domains.indexOf(item)
     if (index !== -1) {
         dynamicValidateForm.domains.splice(index, 1)
@@ -469,7 +473,11 @@ const submitForm = async (formEl: FormInstance | undefined) => {
             }
             // console.log(dataDTO);
             // let submitRes = await axios.post(`/api/teacher/lab/apply/submitApplyForm`, dataDTO);
-            ws.send(JSON.stringify(dataDTO));
+            if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+                ws.send(JSON.stringify(dataDTO));
+            } else {
+                ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+            }
             // if (submitRes.data.code === 1) {
             //     ElMessage.success(submitRes.data.msg);
             // } else {
@@ -483,13 +491,12 @@ const submitForm = async (formEl: FormInstance | undefined) => {
 }
 
 ws.onmessage = (event) => {
-    if(event.data === 'heartbeat') {
+    if (event.data === 'heartbeat') {
         ws.send('heartbeatAsk');
         return;
     }
     const submitRes = JSON.parse(event.data);
-    
-    console.log(submitRes);
+
     if (Array.isArray(submitRes.data)) {
         return;
     }
@@ -501,29 +508,35 @@ ws.onmessage = (event) => {
     }
 }
 
-ws.onerror = (e: any) => {
-    // console.log(e);
-    if (e.target.readyState === WebSocket.CLOSED) {
-        fetch(`/ws/teacher/apply/fill`, {
-            headers: {
-                'Sec-WebSocket-Protocol': token,
-            }
-        }).then(res => {
-            if (res.status === 401) {
-                // console.log('登录已过期，请重新登录');
-                ElMessage.error('NOT_LOGIN');
-                // 提示用户重新登录
-                router.push('/login');
-            } else {
-                ElMessage.error('服务器出错，请联系管理员');
-            }
-        })
-    }
-}
+// ws.onerror = (e: any) => {
+//     // console.log(e);
+//     if (e.target.readyState === WebSocket.CLOSED) {
+//         fetch(`/ws/teacher/apply/fill`, {
+//             headers: {
+//                 'Sec-WebSocket-Protocol': token,
+//             }
+//         }).then(res => {
+//             if (res.status === 401) {
+//                 // console.log('登录已过期，请重新登录');
+//                 ElMessage.error('NOT_LOGIN');
+//                 // 提示用户重新登录
+//                 router.push('/login');
+//             } else {
+//                 ElMessage.error('服务器出错，请联系管理员');
+//             }
+//         })
+//     }
+// }
 
 const resetForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return
     formEl.resetFields()
+    dynamicValidateForm.domains = [{
+        key: 1,
+        week: route.query.week as string || '',
+        section: route.query.weekdaySection as string || '',
+    },]
+    dynamicValidateForm.applyReason = 8;
 }
 
 states.value.push({
@@ -586,10 +599,13 @@ onMounted(async () => {
 
 
 /* 路由跳转前将websocket关闭 */
-router.beforeEach((_to, _from, next) => {
-    ws.close();
-    next();
-});
+// router.beforeEach((_to, _from, next) => {
+//     ws.close();
+//     next();
+// });
+
+onBeforeUnmount(() => {
+	ws?.close();
+})
 
 </script>
-

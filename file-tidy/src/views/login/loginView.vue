@@ -7,25 +7,28 @@
 			<span v-for="(randomValue, index) in randomValues" :key="index"
 				:style="{ '--i': (randomValue + 1) / 7, '--color': colors[index % colors.length], '--colorA': colorsA[index % colorsA.length] }"></span>
 		</div> -->
+		<div class="title">
+			<h1>人工智能学院实验室信息统计及开放预约系统</h1>
+		</div>
 		<div class="form-container">
-			<div style="width: 100%;">
+			<div style="width: 100%; margin-bottom: 10px;">
 				<el-segmented style="width: 60%; margin: 0 auto; display: flex; justify-content: center; align-items: center; 
-					background-color: #233a5c;" v-model="isAdmin" :options="options" block />
+					background-color: white !important;" v-model="isAdmin" :options="options" block />
 			</div>
 			<div class="login-form">
 				<el-form ref="ruleFormRef" :model="form" label-width="auto">
 					<el-form-item label="账号：" prop="username"
 						:rules="{ validator: usernameValidator, trigger: 'blur' }">
-						<el-input v-model="form.username" type="text" autocomplete="on" />
+						<el-input v-model="form.username" type="text" autocomplete="on" :prefix-icon="User" />
 					</el-form-item>
 					<el-form-item label="密码：" prop="password"
 						:rules="{ validator: passwordValidator, trigger: 'blur' }">
-						<el-input v-model="form.password" type="password" autocomplete="on" />
+						<el-input v-model="form.password" type="password" autocomplete="on"  :prefix-icon="Lock" />
 					</el-form-item>
 					<el-form-item label="验证码：" prop="captcha" :rules="{ validator: captchaValidator, trigger: 'blur' }">
 						<div
 							style="width: 100%; display: inline-flex; justify-content: space-between; align-items: center;">
-							<el-input v-model="form.captcha" />
+							<el-input v-model="form.captcha" :prefix-icon="Collection" />
 							<el-image
 								style="margin-left: 2.5%; border-radius: var(--el-input-border-radius, var(--el-border-radius-base));"
 								:src="captchaImg" fit="scale-down" @click="refreshCaptcha" />
@@ -36,9 +39,9 @@
 							<el-button type="primary" @click="submitForm(ruleFormRef)">
 								登录
 							</el-button>
-							<el-button v-if="!isAdmin" type="primary" @click="register">
+							<!-- <el-button v-if="!isAdmin" type="primary" @click="register">
 								注册
-							</el-button>
+							</el-button> -->
 						</div>
 					</el-form-item>
 				</el-form>
@@ -56,10 +59,11 @@
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
-import { ElMessage, type FormInstance } from 'element-plus'
+import { ElMessage, ElNotification, type FormInstance } from 'element-plus'
 import axios from 'axios';
 import router from '../../router';
 import { useUserStore } from '../../stores/store';
+import { Collection, Lock, User } from '@element-plus/icons-vue';
 
 // const randomValues = ref(Array.from({ length: (window.outerWidth / 15) }, () => Math.floor(Math.random() * 100)));
 // const colors = [
@@ -73,6 +77,20 @@ import { useUserStore } from '../../stores/store';
 // 	'#3399ff44', '#ff666644', '#99cc0044', '#ff990044', '#cc339944',
 // 	'#0099cc44', '#ff336644', '#66cc6644', '#ffcc9944', '#9933cc44',
 // ];
+// const getCsrfToken = async () => {
+// 	let res = await axios.get('/api/csrf-token');
+// 	console.log(res.headers['x-xsrf-token']);
+	
+// 	localStorage.setItem('csrfToken', res.data.data);
+// 	return;
+// }
+
+ElNotification({
+	title: '欢迎使用实验室信息统计及开放预约系统',
+	message: '若无法正常使用，请升级浏览器或使用Chrome浏览器',
+	type: 'info',
+	duration: 10 * 1000,
+})
 
 const captchaImg = ref('/api/admin/login/captcha');
 const isAdmin = ref(true);
@@ -115,7 +133,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
 	formEl.validate(async (valid) => {
 		if (valid) {
 			if (isAdmin.value) {
-				let res = await axios.post('/api/admin/login', form);
+				let res = await axios.post('/api/login', form);
 				let data = res.data;
 				if (data.code === 1) {
 					refreshCaptcha();
@@ -124,14 +142,14 @@ const submitForm = async (formEl: FormInstance | undefined) => {
 					roleStore.setUser('admin');
 					const classroomRes = await axios.get('/api/admin/class-time/classrooms');
 					const semesterRes = await axios.get('/api/admin/class-time/semesters');
-					localStorage.setItem('basic-data', JSON.stringify({ 'classrooms': classroomRes.data, 'semesters': semesterRes.data }));
+					localStorage.setItem('adminBasicData', JSON.stringify({ 'classrooms': classroomRes.data, 'semesters': semesterRes.data }));
 					ElMessage.success('登录成功！');
 					router.push({
 						path: '/pending-approval'
 					});
 				}
 			} else {
-				let res = await axios.post('/api/teacher/login', form);
+				let res = await axios.post('/api/login', form);
 				let data = res.data;
 				if (data.code === 1) {
 					refreshCaptcha();
@@ -139,12 +157,12 @@ const submitForm = async (formEl: FormInstance | undefined) => {
 					localStorage.setItem('role', 'teacher');
 					roleStore.setUser('teacher');
 					const semesterRes = await axios.get('/api/teacher/select-semesters');
-					const courseNameByIdRes = await axios.get(`/api/teacher/course/get-course-names-by-semester-id/${semesterRes.data.data.at(-1).id}`);
+					const courseNameByIdRes = await axios.get(`/api/teacher/course/get-course-names-by-semester-id/${semesterRes.data.data.length > 0 ? semesterRes.data.data.at(-1).id : 0}`);
 					const classRes = await axios.get(`/api/teacher/lab/apply/getClassList`);
 					const teacherRes = await axios.get(`/api/teacher/lab/apply/getTeacherList`);
 					const labRes = await axios.get(`/api/teacher/lab/apply/getLabList`);
 					const placeLabRes = await axios.get(`/api/teacher/lab/apply/classrooms/逸夫楼`);
-					localStorage.setItem('basic-data', JSON.stringify({
+					localStorage.setItem('teacherBasicData', JSON.stringify({
 						'semesters': semesterRes.data,
 						'courseNames': courseNameByIdRes.data,
 						'classes': classRes.data,
@@ -163,11 +181,11 @@ const submitForm = async (formEl: FormInstance | undefined) => {
 	})
 }
 
-const register = () => {
-	router.push({
-		path: '/register'
-	});
-}
+// const register = () => {
+// 	router.push({
+// 		path: '/register'
+// 	});
+// }
 
 const resetForm = (formEl: FormInstance | undefined) => {
 	if (!formEl) return
@@ -175,6 +193,8 @@ const resetForm = (formEl: FormInstance | undefined) => {
 }
 
 refreshCaptcha();
+
+// getCsrfToken();
 
 </script>
 
@@ -266,8 +286,8 @@ $minOpacity: 0.3;
 	background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
 	overflow: hidden;
 	display: flex;
-	justify-content: center;
 	align-items: center;
+	flex-direction: column;
 	position: relative;
 }
 
@@ -347,6 +367,7 @@ $minOpacity: 0.3;
 	align-items: center;
 	opacity: 0.5;
 	position: relative;
+	top: 20%;
 }
 
 .login-form {
@@ -371,5 +392,17 @@ $minOpacity: 0.3;
 .el-input {
 	--el-input-text-color: black !important;
 	--el-text-color-regular: black !important;
+}
+
+.title {
+	position: relative;
+	color: rgb(143, 145, 216);
+	top: 20%;
+	bottom: 1%;
+}
+
+.title h1 {
+	text-shadow: 1px 1px 10px #79bbff;
+	
 }
 </style>

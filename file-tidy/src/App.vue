@@ -1,5 +1,6 @@
 <template>
-	<div style="height: 100%; position: fixed; width: 100%" v-if="$route.meta.keepAlive">
+	<div style="height: 100%; position: fixed; width: 100%; background: radial-gradient(ellipse at bottom, rgb(229, 239, 253) 0%, rgb(204, 224, 247) 100%);"
+		v-if="$route.meta.keepAlive">
 		<header-admin-view v-if="roleStore.role === 'admin'"></header-admin-view>
 		<header-teacher-view v-if="roleStore.role === 'teacher'"></header-teacher-view>
 		<div style="width: 100%; height: 100%; display: inline-flex">
@@ -10,7 +11,7 @@
 			</transition>
 		</div>
 	</div>
-	<transition name="fade" mode="out-in" v-if="!$route.meta.keepAlive">
+	<transition v-if="!$route.meta.keepAlive">
 		<router-view :key="$route.path" />
 	</transition>
 </template>
@@ -24,33 +25,21 @@ import headerTeacherView from "./views/teacher/headerTeacherView.vue";
 import asideTeacherView from "./views/teacher/asideTeacherView.vue";
 import asideAdminView from "./views/admin/asideAdminView.vue";
 import { useCollapseStore, useUserStore } from "./stores/store";
-
+import router from './router';
+import { ElMessage, ElNotification } from "element-plus";
 const collapse = useCollapseStore();
 const roleStore = useUserStore();
 roleStore.role = `${localStorage.getItem("role")}`;
+const title = document.querySelector('title');
 
-// onMounted(async () => {
-// 	if(`${localStorage.getItem('role')}` === 'admin') {
-// 		const classroomRes = await axios.get('/api/admin/class-time/classrooms');
-// 		const semesterRes = await axios.get('/api/admin/class-time/semesters');
-// 		localStorage.setItem('basic-data', JSON.stringify({ 'classrooms': classroomRes.data, 'semesters': semesterRes.data }));
-// 	} else if(`${localStorage.getItem('role')}` === 'teacher') {
-// 		axios.defaults.headers['token'] = `${localStorage.getItem('token')}`;
-// 		const semesterRes = await axios.get('/api/teacher/select-semesters');
-// 		const courseNameByIdRes = await axios.get(`/api/teacher/course/get-course-names-by-semester-id/${semesterRes.data.data.at(-1).id}`);
-// 		const classRes = await axios.get(`/api/teacher/lab/apply/getClassList`);
-// 		const teacherRes = await axios.get(`/api/teacher/lab/apply/getTeacherList`);
-// 		const labRes = await axios.get(`/api/teacher/lab/apply/getLabList`);
-// 		const placeLabRes = await axios.get(`/api/teacher/lab/apply/classrooms/逸夫楼`);
-// 		localStorage.setItem('basic-data', JSON.stringify({
-// 			'semesters': semesterRes.data,
-// 			'courseNames': courseNameByIdRes.data,
-// 			'classes': classRes.data,
-// 			'teachers': teacherRes.data,
-// 			'labs': labRes.data,
-// 			'placeLabs': placeLabRes.data }));
-// 	}
-// });
+router.beforeEach((to, _from, next) => {
+	if (to.path === '/404' || to.path === '/login' || to.path === '/' || (to.name?.toString().includes('admin') && `${localStorage.getItem('role')}` === 'admin') || (to.name?.toString().includes('teacher') && `${localStorage.getItem('role')}` === 'teacher')) {
+		next();
+		title.innerText = `${to.meta.title} | 实验室信息统计及开放预约系统`;
+	} else {
+		next({ path: '/404' });
+	}
+});
 
 window.addEventListener("offline", () => {
 	ElMessage.error("网络连接已断开，请检查网络连接");
@@ -58,94 +47,30 @@ window.addEventListener("offline", () => {
 </script>
 
 <style lang="scss">
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    flex-direction: column;
-}
-
-.circle-container {
-    position: relative;
-    width: 100px;
-    height: 100px;
-}
-
-.circle {
-    position: absolute;
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    border: 2px solid #2196f3;
-    animation: rotate-circle 3s infinite linear;
-}
-
-.dot {
-    position: absolute;
-    width: 15px;
-    height: 15px;
-    background-color: #82b1ff;
-    border-radius: 50%;
-    top: -7.5px;
-    left: 42.5px;
-    animation: flash-dot 1s infinite ease-in-out alternate;
-}
-
-.dot:nth-child(2) { animation-delay: 0.3s; }
-.dot:nth-child(3) { animation-delay: 0.6s; }
-.dot:nth-child(4) { animation-delay: 0.9s; }
-
-.loading-text {
-    margin-top: 30px;
-    font-size: 24px;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: #82b1ff;
-}
-
-@keyframes rotate-circle {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-@keyframes flash-dot {
-    0% { opacity: 0.1; }
-    100% { opacity: 1; }
-}
-
-
-
-
-
 $table-color: #337ecc;
 
 
-.fade-enter-active,
-.fade-leave-active {
-	transition: opacity 0.5s ease;
-}
+// .fade-enter-active,
+// .fade-leave-active {
+// 	transition: opacity 1s ease;
+// }
 
-.fade-enter-from,
-.fade-leave-to {
-	opacity: 0;
-}
+// .fade-enter-from,
+// .fade-leave-to {
+// 	opacity: 0;
+// }
 
 
 .aside {
 	transition: width 0.3s ease;
+	margin-top: 1%;
+	color: rgb(56, 73, 148);
 }
 
 .main {
 	/* 添加过渡动画 */
 	transition: margin-left 0.3s ease;
-	/* 初始位置 */
+	background: radial-gradient(ellipse at bottom, rgb(229, 239, 253) 0%, rgb(204, 224, 247) 100%);
 }
 
 html,
@@ -288,5 +213,18 @@ td:hover {
 	margin-top: -2vh;
 	background-color: rgb(86, 108, 185);
 	border-radius: 3px;
+}
+
+
+
+.el-segmented {
+	--el-segmented-item-selected-color: #fff !important;
+	--el-segmented-item-selected-bg-color: rgb(125, 149, 255) !important;
+	--el-segmented-item-hover-color: #fff !important;
+	--el-segmented-item-hover-bg-color: rgb(56, 73, 148) !important;
+	--el-border-radius-base: 10px !important;
+	color: rgb(56, 73, 148) !important;
+	font-weight: bold;
+	font-size: large !important;
 }
 </style>

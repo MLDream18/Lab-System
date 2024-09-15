@@ -50,7 +50,7 @@ public class MyInterceptor implements HandshakeInterceptor {
 //            response.setStatusCode(HttpStatus.PAYMENT_REQUIRED); // 402
             return false;
         }
-        response.getHeaders().add("Sec-WebSocket-Protocol", token);
+//        response.getHeaders().add("Sec-WebSocket-Protocol", token);
         attributes.put("token", token);
         return true;
     }

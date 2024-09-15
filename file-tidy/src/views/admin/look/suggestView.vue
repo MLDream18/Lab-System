@@ -2,7 +2,7 @@
 	<el-main class="main" :style="{'margin-left': !collapse.isAdminCollapse? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)'}">
 		<div
 			style="width: auto; height: auto; background-color: white; padding: 2.5%; margin-bottom: 3%; border-radius: 10px;">
-			<h3 style="font-weight: bold; text-align: center;">教师建议</h3>
+			<h3 style="font-weight: bold; text-align: center;">教师留言</h3>
 			<el-divider></el-divider>
 			<div v-for="suggest in suggestList" :key="suggest.id" style="border: 1px solid #ddd; padding: 1%; margin-bottom: 1%;">
 				<div style="width: 100%; height: auto; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1%;">
@@ -52,15 +52,15 @@ import { ComponentSize, ElMessage, ElNotification } from 'element-plus';
 import { nextTick, onBeforeUnmount, ref } from 'vue';
 import router from '../../../router';
 import { useTaskStore } from '../../../stores/store';
-import { useCollapseStore } from '../../../stores/store';
+import { useCollapseStore, useWebSocketStore } from '../../../stores/store';
 import { init } from '../../../utils/ws';
 
+const webSocketStore = useWebSocketStore();
 const collapse = useCollapseStore();
 const taskStore = useTaskStore();
 
-const token = `${localStorage.getItem('token')}`;
-const ws = init('/ws/admin/suggestions');
-const wsDsp = init('/ws/admin/approval');
+var ws: any = null;
+var wsDsp: any = null;
 const currentRole = ref();
 const currentRoleTask = ref();
 
@@ -74,18 +74,26 @@ const total = ref(0) // 总条数
 
 const handleSizeChange = (val: number) => {
 	pageSize.value = val;
-	ws?.send(JSON.stringify({
-		pageSize: val,
-		currentPage: currentPage.value
-	}))
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws?.send(JSON.stringify({
+			pageSize: val,
+			currentPage: currentPage.value
+		}))
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 }
 
 const handleCurrentPageChange = (val: number) => {
 	currentPage.value = val;
-	ws?.send(JSON.stringify({
-		pageSize: pageSize.value,
-		currentPage: val
-	}))
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws?.send(JSON.stringify({
+			pageSize: pageSize.value,
+			currentPage: val
+		}))
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 }
 
 // const reply = (id: number, replyContent: string) => {
@@ -119,14 +127,8 @@ const taskLen = (data: any, role: number) => {
 	return tmp.length;
 }
 
-	
-ws.onmessage = (e) => {
-	if (e.data === 'heartbeat') {
-		ws?.send('heartbeatAsk');
-		return;
-	}
-	const data = JSON.parse(e.data);
-
+const handleMessage = (data: any) => {
+	webSocketStore.setWsSuggestionData(data);
 	suggestList.value = data.rows.map((item: any) => {
 		// console.log(item);
 		return {
@@ -138,41 +140,50 @@ ws.onmessage = (e) => {
 	total.value = suggestList.value.length;
 	// console.log(suggestList.value);
 }
+	
+// if(!webSocketStore.wsSuggestion.ws) {
+ws = init('/ws/admin/suggestions');
+// 	webSocketStore.setWsSuggestionWs(ws);
+// } else {
+// 	ws = webSocketStore.wsSuggestion.ws;
+// 	handleMessage(webSocketStore.wsSuggestion.data);
+// }
 
-ws.onerror = (e: any) => {
-	// console.log(e, '1111');
-	if (e.target.readyState === WebSocket.CLOSED) {
-		// console.error('WebSocket connection failed');
-		// 检查响应状态码
-		fetch(`/ws/admin/suggestions`, {
-			headers: {
-				'Sec-WebSocket-Protocol': token
-			}
-		}).then(response => {
-			if (response.status === 401) {
-				// console.log('登录已过期，请重新登录');
-				ElMessage.error('NOT_LOGIN');
-				// 提示用户重新登录
-				router.push('/login');
-			} else {
-				// console.log('WebSocket连接失败，请检查网络连接');
-				ElMessage.error('服务器出错，请联系管理员');
-			}
-		});
-	}
-}
-
-wsDsp.onmessage = (e: any) => {
-	if(e.data === 'heartbeat') {
-		wsDsp?.send('heartbeatAsk');
+ws.onmessage = (e: any) => {
+	if (e.data === 'heartbeat') {
+		ws?.send('heartbeatAsk');
 		return;
 	}
-	// ElNotification({
-	// 	title: '✉️通知',
-	// 	message: '您有一条新的审批需要处理',
-	// 	type: 'info',
-	// })
-	let resData = JSON.parse(e.data).data;
+	const data = JSON.parse(e.data);
+	handleMessage(data);	
+}
+
+// ws.onerror = (e: any) => {
+// 	// console.log(e, '1111');
+// 	if (e.target.readyState === WebSocket.CLOSED) {
+// 		// console.error('WebSocket connection failed');
+// 		// 检查响应状态码
+// 		fetch(`/ws/admin/suggestions`, {
+// 			headers: {
+// 				'Sec-WebSocket-Protocol': token
+// 			}
+// 		}).then(response => {
+// 			if (response.status === 401) {
+// 				// console.log('登录已过期，请重新登录');
+// 				ElMessage.error('NOT_LOGIN');
+// 				// 提示用户重新登录
+// 				router.push('/login');
+// 			} else {
+// 				// console.log('WebSocket连接失败，请检查网络连接');
+// 				ElMessage.error('服务器出错，请联系管理员');
+// 			}
+// 		});
+// 	}
+// }
+
+const handleMessageSp = (data: any) => {
+	webSocketStore.setWsSpData(data);
+	let resData = JSON.parse(data).data;
 	if (!currentRole.value) {
 		currentRole.value = resData.role;
 		currentRoleTask.value = taskLen(resData.result, currentRole.value);
@@ -196,28 +207,49 @@ wsDsp.onmessage = (e: any) => {
 	});
 }
 
-wsDsp.onerror = (e: any) => {
-	// console.log(e, '1111');
-	if (e.target.readyState === WebSocket.CLOSED) {
-		// console.error('WebSocket connection failed');
-		// 检查响应状态码
-		fetch(`/ws/admin/approval`, {
-			headers: {
-				'Sec-WebSocket-Protocol': token
-			}
-		}).then(response => {
-			if (response.status === 401) {
-				// console.log('登录已过期，请重新登录');
-				ElMessage.error('NOT_LOGIN');
-				// 提示用户重新登录
-				router.push('/login');
-			} else {
-				// console.log('WebSocket连接失败，请检查网络连接');
-				ElMessage.error('服务器出错，请联系管理员');
-			}
-		});
+// if(!webSocketStore.wsSp.ws) {
+wsDsp = init('/ws/admin/approval');
+// 	webSocketStore.setWsSpWs(wsDsp);
+// } else {
+// 	wsDsp = webSocketStore.wsSp.ws;
+// 	handleMessageSp(webSocketStore.wsSp.data);
+// }
+
+wsDsp.onmessage = (e: any) => {
+	if(e.data === 'heartbeat') {
+		wsDsp?.send('heartbeatAsk');
+		return;
 	}
+	// ElNotification({
+	// 	title: '✉️通知',
+	// 	message: '您有一条新的审批需要处理',
+	// 	type: 'info',
+	// })
+	handleMessageSp(e.data);
 }
+
+// wsDsp.onerror = (e: any) => {
+// 	// console.log(e, '1111');
+// 	if (e.target.readyState === WebSocket.CLOSED) {
+// 		// console.error('WebSocket connection failed');
+// 		// 检查响应状态码
+// 		fetch(`/ws/admin/approval`, {
+// 			headers: {
+// 				'Sec-WebSocket-Protocol': token
+// 			}
+// 		}).then(response => {
+// 			if (response.status === 401) {
+// 				// console.log('登录已过期，请重新登录');
+// 				ElMessage.error('NOT_LOGIN');
+// 				// 提示用户重新登录
+// 				router.push('/login');
+// 			} else {
+// 				// console.log('WebSocket连接失败，请检查网络连接');
+// 				ElMessage.error('服务器出错，请联系管理员');
+// 			}
+// 		});
+// 	}
+// }
 
 onBeforeUnmount(() => {
 	ws?.close();

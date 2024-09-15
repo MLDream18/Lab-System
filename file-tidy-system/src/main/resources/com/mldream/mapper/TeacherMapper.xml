@@ -18,4 +18,7 @@
                    <if test="appUrl!= null">#{appUrl},</if>
                    #{submitDate})
     </insert>
+<!--    <insert id="insertUser">-->
+<!--        insert into user(username, password, role, user_id) values(#{username}, #{password}, #{role}, #{userId})-->
+<!--    </insert>-->
 </mapper>

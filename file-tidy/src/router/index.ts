@@ -11,7 +11,8 @@ const routes = [
         name: 'login',
         component: () => import('../views/login/loginView.vue'),
         meta: {
-            keepAlive: false
+            keepAlive: false,
+            title: '登录',
         }
     },
     {
@@ -19,7 +20,8 @@ const routes = [
         name:'register',
         component: () => import('../views/login/registerView.vue'),
         meta: {
-            keepAlive: false
+            keepAlive: false,
+            title: '注册',
         }
     },
     {
@@ -27,7 +29,8 @@ const routes = [
         name: 'admin-pending-approval',
         component: () => import('../views/admin/approve/dspView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '待审批'
         }
     },
     {
@@ -35,7 +38,8 @@ const routes = [
         name: 'admin-approved-list',
         component: () => import('../views/admin/approve/yspView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '已审批'
         }
     },
     {
@@ -43,7 +47,8 @@ const routes = [
         name: 'admin-experiment-project',
         component: () => import('../views/admin/look/experimentView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '实验项目'
         }
     },
     {
@@ -51,7 +56,8 @@ const routes = [
         name: 'admin-class-schedule',
         component: () => import('../views/admin/look/classScheduleView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '课程表'
         }
     },
     {
@@ -59,7 +65,8 @@ const routes = [
         name: 'admin-suggest',
         component: () => import('../views/admin/look/suggestView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '教师建议'
         }
     },
     {
@@ -67,7 +74,8 @@ const routes = [
         name: 'teacher-apply',
         component: () => import('../views/teacher/lab-apply/applyView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '实验室申请'
         }
     },
     {
@@ -75,7 +83,8 @@ const routes = [
         name: 'teacher-applyFill',
         component: () => import('../views/teacher/lab-apply/applyFillView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '实验室申请信息填写'
         }
     },
     {
@@ -83,7 +92,8 @@ const routes = [
         name: 'teacher-applying',
         component: () => import('../views/teacher/lab-apply/applyingView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '申请记录'
         }
     },
     {
@@ -91,7 +101,8 @@ const routes = [
         name: 'teacher-history-apply',
         component: () => import('../views/teacher/lab-apply/historyView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '历史申请'
         }
     },
     {
@@ -99,7 +110,8 @@ const routes = [
         name: 'teacher-experiment-project-entry',
         component: () => import('../views/teacher/entry/experimentView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '实验项目录入'
         }
     },
     {
@@ -107,7 +119,8 @@ const routes = [
         name: 'teacher-suggest-entry',
         component: () => import('../views/teacher/entry/suggestView.vue'),
         meta: {
-            keepAlive: true
+            keepAlive: true,
+            title: '教师建议填写'
         }
     },
     {
@@ -115,7 +128,8 @@ const routes = [
         name: '404',
         component: () => import('../views/error/404.vue'),
         meta: {
-            keepAlive: false
+            keepAlive: false,
+            title: '404'
         }
     }
 ]

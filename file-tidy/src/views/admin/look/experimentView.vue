@@ -47,7 +47,6 @@
 					:header-cell-style="{ 'text-align': 'center', 'background-color': 'white', 'color': 'black', 'width': '1vw' }"
 					:row-style="{ 'fontSize': '15px', 'textAlign': 'center', 'width': '10px' }"
 					:row-class-name="tableRowClassName">
-					<el-table-column type="index" label="序号" width="70%" />
 					<el-table-column type="expand">
 						<template #default="props">
 							<div>
@@ -86,6 +85,7 @@
 							</div>
 						</template>
 					</el-table-column>
+					<el-table-column type="index" label="序号" width="70%" />
 					<el-table-column label="老师" prop="teacherName" />
 					<el-table-column label="班级" prop="classNames" />
 					<el-table-column label="课程名称" prop="courseName" />
@@ -106,17 +106,18 @@
 
 <script lang="ts" setup>
 import axios from 'axios';
-import { ComponentSize, ElMessage, ElNotification } from 'element-plus';
+import { ComponentSize, ElNotification } from 'element-plus';
 import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 // import router from '../../router';
 import * as XLSX from 'xlsx-js-style';
 import router from '../../../router';
 import { useTaskStore } from '../../../stores/store';
-import { useCollapseStore } from '../../../stores/store';
+import { useCollapseStore, useWebSocketStore } from '../../../stores/store';
 import { init } from '../../../utils/ws';
 
-const basicData = JSON.parse(`${localStorage.getItem('basic-data')}`);
+const basicData = JSON.parse(`${localStorage.getItem('adminBasicData')}`);
 
+const webSocketStore = useWebSocketStore();
 const collapse = useCollapseStore();
 const taskStore = useTaskStore();
 
@@ -359,21 +360,34 @@ onMounted(async () => {
 	}
 })
 
-const wsDsp = init(`/ws/admin/approval`);
+const taskLen = (data: any, role: number) => {
+	let tmp = [];
+	tmp = data.filter((item: any) => {
+		if (role === 1 && item.state === 0) {
+			return {
+				...item,
+			}
+		} else if (role === 2 && item.state === 1) {
+			return {
+				...item,
+			}
+		}
+	});
+	tmp = tmp.map((item: any) => {
+		return {
+			...item,
+		}
+	});
+	return tmp.length;
+}
+
+var wsDsp: any = null;
 const currentRole = ref();
 const currentRoleTask = ref();
 
-wsDsp.onmessage = (e: any) => {
-	if (e.data === 'heartbeat') {
-		wsDsp?.send('heartbeatAsk');
-		return;
-	}
-	// ElNotification({
-	// 	title: '✉️通知',
-	// 	message: '您有一条新的审批需要处理',
-	// 	type: 'info',
-	// })
-	let resData = JSON.parse(e.data).data;
+const handleMessage = (data: any) => {
+	webSocketStore.setWsSpData(data);
+	let resData = JSON.parse(data).data;
 	if (!currentRole.value) {
 		currentRole.value = resData.role;
 		currentRoleTask.value = taskLen(resData.result, currentRole.value);
@@ -397,50 +411,49 @@ wsDsp.onmessage = (e: any) => {
 	});
 }
 
-wsDsp.onerror = (e: any) => {
-	// console.log(e, '1111');
-	if (e.target.readyState === WebSocket.CLOSED) {
-		// console.error('WebSocket connection failed');
-		// 检查响应状态码
-		fetch(`/ws/admin/approval`, {
-			headers: {
-				'Sec-WebSocket-Protocol': `${localStorage.getItem('token')}`
-			}
-		}).then(response => {
-			if (response.status === 401) {
-				// console.log('登录已过期，请重新登录');
-				ElMessage.error('NOT_LOGIN');
-				// 提示用户重新登录
-				router.push('/login');
-			} else {
-				// console.log('WebSocket连接失败，请检查网络连接');
-				ElMessage.error('服务器出错，请联系管理员');
-			}
-		});
+// if(!webSocketStore.wsSp.ws) {
+wsDsp = init(`/ws/admin/approval`);
+// 	webSocketStore.setWsSpWs(wsDsp);
+// } else {
+// 	wsDsp = webSocketStore.wsSp.ws;
+// 	handleMessage(webSocketStore.wsSp.data);
+// }
+
+wsDsp.onmessage = (e: any) => {
+	if (e.data === 'heartbeat') {
+		wsDsp?.send('heartbeatAsk');
+		return;
 	}
+	// ElNotification({
+	// 	title: '✉️通知',
+	// 	message: '您有一条新的审批需要处理',
+	// 	type: 'info',
+	// })
+	handleMessage(e.data);
 }
 
-
-const taskLen = (data: any, role: number) => {
-	let tmp = [];
-	tmp = data.filter((item: any) => {
-		if (role === 1 && item.state === 0) {
-			return {
-				...item,
-			}
-		} else if (role === 2 && item.state === 1) {
-			return {
-				...item,
-			}
-		}
-	});
-	tmp = tmp.map((item: any) => {
-		return {
-			...item,
-		}
-	});
-	return tmp.length;
-}
+// wsDsp.onerror = (e: any) => {
+// 	// console.log(e, '1111');
+// 	if (e.target.readyState === WebSocket.CLOSED) {
+// 		// console.error('WebSocket connection failed');
+// 		// 检查响应状态码
+// 		fetch(`/ws/admin/approval`, {
+// 			headers: {
+// 				'Sec-WebSocket-Protocol': `${localStorage.getItem('token')}`
+// 			}
+// 		}).then(response => {
+// 			if (response.status === 401) {
+// 				// console.log('登录已过期，请重新登录');
+// 				ElMessage.error('NOT_LOGIN');
+// 				// 提示用户重新登录
+// 				router.push('/login');
+// 			} else {
+// 				// console.log('WebSocket连接失败，请检查网络连接');
+// 				ElMessage.error('服务器出错，请联系管理员');
+// 			}
+// 		});
+// 	}
+// }
 
 onBeforeUnmount(() => {
 	wsDsp?.close();

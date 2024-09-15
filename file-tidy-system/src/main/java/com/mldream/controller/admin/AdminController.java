@@ -20,8 +20,10 @@ import com.mldream.utils.VerifyCode;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -30,10 +32,14 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @RestController
 @CrossOrigin
 @RequestMapping("/admin")
 public class AdminController {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private AdminService adminService;
@@ -77,20 +83,23 @@ public class AdminController {
 
     @PostMapping("/login")
     public Result login(@RequestBody AdminLoginDTO adminLoginDTO) {
+        log.info("login: {}", adminLoginDTO);
         String captcha = (String) redisTemplate.opsForValue().get("captcha");
         if(captcha == null || !captcha.equalsIgnoreCase(adminLoginDTO.getCaptcha())) {
             return Result.error(captcha != null? "验证码错误" : "验证码过期");
         }
-        Admin admin = Admin.builder().username(adminLoginDTO.getUsername()).password(adminLoginDTO.getPassword()).build();
+        Admin admin = adminService.getAdminByUsername(adminLoginDTO.getUsername());
         // TODO: 校验用户名和密码
-        Admin loginAdmin = adminService.login(admin);
-        if(loginAdmin == null) {
+//        Admin loginAdmin = adminService.login(admin);
+        String password = adminLoginDTO.getPassword();
+        String encodedPassword = admin.getPassword();
+        if(!passwordEncoder.matches(password, encodedPassword)) {
             return Result.error("用户名或密码错误");
         }
 
         applyFormMapper.checkApplyForm();
 
-        Integer role = loginAdmin.getRole();
+        Integer role = admin.getRole();
         // TODO: 生成token并返回
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);

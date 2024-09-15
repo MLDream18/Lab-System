@@ -6,4 +6,6 @@ public interface AdminService {
 
 
     Admin login(Admin admin);
+
+    Admin getAdminByUsername(String username);
 }

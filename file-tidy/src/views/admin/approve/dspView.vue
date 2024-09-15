@@ -1,7 +1,7 @@
 <template>
 	<el-main class="main"
 		:style="{ 'margin-left': !collapse.isAdminCollapse ? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)' }">
-		<div style="width: 20%; height: auto; background-color: white; margin-bottom: 1.5%;">
+		<div style="width: 20%; height: auto; margin-bottom: 1.5%;">
 			<el-segmented v-model="defaultOption" :options="options" block @change="changeOption"
 				style="background-color: white;" />
 		</div>
@@ -11,8 +11,10 @@
 				:cell-style="{ 'textAlign': 'center', 'width': '10px' }"
 				:header-cell-style="{ 'text-align': 'center', 'background-color': 'white', 'color': 'black', 'width': '1vw' }"
 				:row-style="{ 'fontSize': '15px', 'textAlign': 'center', 'width': '10px' }"
-				:row-class-name="tableRowClassName">
-				<el-table-column type="index" label="序号" width="70%" />
+				:row-class-name="tableRowClassName"
+				@row-click="handleRowClick"
+				:row-key="getRowKey"
+				:expand-row-keys="expands">
 				<el-table-column type="expand">
 					<template #default="props">
 						<div>
@@ -100,6 +102,7 @@
 						</div>
 					</template>
 				</el-table-column>
+				<el-table-column type="index" label="序号" width="70%" />
 				<el-table-column label="提交日期" prop="submitDate" />
 				<el-table-column label="申请人姓名" prop="applicant" />
 				<el-table-column label="申请实验室" prop="labName" />
@@ -113,7 +116,7 @@
 				</el-table-column>
 			</el-table>
 		</div>
-		<el-dialog title="审核" v-model="approvalDialogVisible" width="30%">
+		<el-dialog title="审核" v-model="approvalDialogVisible" width="30%" draggable>
 			<el-form ref="approvalFormRef" :model="approvalForm" label-width="auto" status-icon>
 				<div v-if="currentRole === 1">
 					<el-form-item label="审核意见" prop="unitOpinion" :rules="[
@@ -155,20 +158,23 @@ import { ElMessage, FormInstance } from 'element-plus';
 import { onBeforeUnmount, ref } from 'vue'
 import router from '../../../router';
 import { useTaskStore } from '../../../stores/store';
-import { useCollapseStore } from '../../../stores/store';
+import { useCollapseStore, useWebSocketStore } from '../../../stores/store';
 import { init } from '../../../utils/ws';
  
+const webSocketStore = useWebSocketStore();
 const collapse = useCollapseStore();
 const taskStore = useTaskStore();
 taskStore.task = 0;
 
+const expands = ref<number[]>([]);
 const defaultOption = ref('待审批');
 const options = ['待审批', '审批记录'];
 const changeOption = () => {
 	router.push({ path: `/approved-list` });
 }
 
-const ws = init(`/ws/admin/approval`);
+var ws: any = null;
+
 const approvalFormRef = ref<FormInstance>();
 const currentRole = ref(); // 当前角色
 const dspApplyInfo = ref<any[]>([]);
@@ -185,13 +191,34 @@ const approvalForm = ref({
 	applyFormId: 1,
 });
 
-ws.onmessage = (e: any) => {
-	if (e.data === 'heartbeat') {
-		ws?.send('heartbeatAsk');
-		return;
+const getRowKey = (row: any) => {
+	return row.applyFormId;
+}
+
+const handleRowClick = (row: any) => {
+	expands.value = expands.value.includes(row.applyFormId) ? expands.value.filter((item: any) => item !== row.applyFormId) : [row.applyFormId, ...expands.value];
+}
+
+const combinedWeekAndSection = (week: string, section: string) => {
+	let index = week.indexOf(';');
+	if (index !== -1) {
+		let weeks = week.split(';');
+		let sections = section.split(';');
+
+		let result = '';
+		for (let i = 0; i < weeks.length - 1; ++i) {
+			result += `周次：${weeks[i]} 节次：${sections[i]}`;
+			if (i !== weeks.length - 2) {
+				result += '；';
+			}
+		}
+		return result;
 	}
-	let data = e.data;
-	// console.log(JSON.parse(data));
+	return `${week}:${section}`;
+}
+
+const handleMessage = (data: any) => {
+	webSocketStore.setWsSpData(data);
 	let resData = JSON.parse(data).data;
 	currentRole.value = resData.role;
 	dspApplyInfo.value = resData.result.filter((item: any) => {
@@ -213,31 +240,47 @@ ws.onmessage = (e: any) => {
 			usedTime: combinedWeekAndSection(item.usedWeek, item.usedSection),
 		}
 	});
-	// console.log(dspApplyInfo.value);
+
 }
 
-ws.onerror = (e: any) => {
-	// console.log(e, '1111');
-	if (e.target.readyState === WebSocket.CLOSED) {
-		// console.error('WebSocket connection failed');
-		// 检查响应状态码
-		fetch(`/ws/admin/approval`, {
-			headers: {
-				'Sec-WebSocket-Protocol': `${localStorage.getItem('token')}`
-			}
-		}).then(response => {
-			if (response.status === 401) {
-				// console.log('登录已过期，请重新登录');
-				ElMessage.error('NOT_LOGIN');
-				// 提示用户重新登录
-				router.push('/login');
-			} else {
-				// console.log('WebSocket连接失败，请检查网络连接');
-				ElMessage.error('服务器出错，请联系管理员');
-			}
-		});
+// if(!webSocketStore.wsSp.ws) {
+ws = init(`/ws/admin/approval`);
+	// webSocketStore.setWsSpWs(ws);
+// } else {
+// 	ws = webSocketStore.wsSp.ws;
+// 	handleMessage(webSocketStore.wsSp.data);
+// }
+
+ws.onmessage = (e: any) => {
+	if (e.data === 'heartbeat') {
+		ws?.send('heartbeatAsk');
+		return;
 	}
+	handleMessage(e.data);
 }
+
+// ws.onerror = (e: any) => {
+// 	// console.log(e, '1111');
+// 	if (e.target.readyState === WebSocket.CLOSED) {
+// 		// console.error('WebSocket connection failed');
+// 		// 检查响应状态码
+// 		fetch(`/ws/admin/approval`, {
+// 			headers: {
+// 				'Sec-WebSocket-Protocol': `${localStorage.getItem('token')}`
+// 			}
+// 		}).then(response => {
+// 			if (response.status === 401) {
+// 				// console.log('登录已过期，请重新登录');
+// 				ElMessage.error('NOT_LOGIN');
+// 				// 提示用户重新登录
+// 				router.push('/login');
+// 			} else {
+// 				// console.log('WebSocket连接失败，请检查网络连接');
+// 				ElMessage.error('服务器出错，请联系管理员');
+// 			}
+// 		});
+// 	}
+// }
 
 const validateUnitOpinion = (_rule: any, value: any, callback: any) => {
 	if (!value || value === '') {
@@ -337,26 +380,9 @@ const timeLineClass = (state: number, index: number) => {
 	}
 }
 
-const combinedWeekAndSection = (week: string, section: string) => {
-	let index = week.indexOf(';');
-	if (index !== -1) {
-		let weeks = week.split(';');
-		let sections = section.split(';');
-
-		let result = '';
-		for (let i = 0; i < weeks.length - 1; ++i) {
-			result += `${weeks[i]}：${sections[i]}`;
-			if (i !== weeks.length - 2) {
-				result += '；';
-			}
-		}
-		return result;
-	}
-	return `${week}:${section}`;
-}
-
 /* 处理审核 */
 const handleTagClick = (applyFormInfo: any) => {
+	expands.value = expands.value.includes(applyFormInfo.applyFormId) ? expands.value.filter((item: any) => item !== applyFormInfo.applyFormId) : [applyFormInfo.applyFormId, ...expands.value];
 	/* 将已有的意见填到表单中 */
 	approvalForm.value.applyFormId = applyFormInfo.applyFormId;
 	approvalForm.value.unitOpinion = applyFormInfo.unitOpinion;
@@ -392,8 +418,11 @@ const handleApprovalSubmit = async (formEl: FormInstance | undefined) => {
 		approvalForm.value.state = 2;
 		approvalForm.value.approvalOpinionDate = new Date();
 	}
-
-	ws?.send(JSON.stringify(approvalForm.value));
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws?.send(JSON.stringify(approvalForm.value));
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 
 	approvalDialogVisible.value = false;
 
@@ -418,7 +447,11 @@ const handleApprovalReject = (formEl: FormInstance | undefined) => {
 		approvalForm.value.approvalOpinionDate = new Date();
 	}
 
-	ws?.send(JSON.stringify(approvalForm.value));
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws?.send(JSON.stringify(approvalForm.value));
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 
 	approvalDialogVisible.value = false;
 

@@ -11,4 +11,5 @@ public interface AdminMapper extends BaseMapper<Admin> {
 
     @Select("select * from admin where username = #{username} and password = #{password}")
     Admin selectByUsernameAndPassword(Admin admin);
+
 }

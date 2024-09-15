@@ -122,7 +122,7 @@ import { ElMessage, type FormInstance } from 'element-plus'
 import axios from 'axios';
 import { useCollapseStore } from '../../../stores/store';
 
-const basicData = JSON.parse(`${localStorage.getItem('basic-data')}`);
+const basicData = JSON.parse(`${localStorage.getItem('teacherBasicData')}`);
 
 const collapse = useCollapseStore();
 

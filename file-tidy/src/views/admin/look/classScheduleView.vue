@@ -1,7 +1,7 @@
 <template>
 	<el-main class="main"
 		:style="{ 'margin-left': !collapse.isAdminCollapse ? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)' }">
-		<div style="width: 50%; height: auto; background-color: white; margin-bottom: 1.5%;">
+		<div style="width: 50%; height: auto; margin-bottom: 1.5%;">
 			<el-segmented v-model="form.place" :options="placeList" block @change="changePlaceTable"
 				style="background-color: white;" />
 		</div>
@@ -116,20 +116,21 @@ import { ElMessage, ElNotification, genFileId, UploadInstance, UploadProps, Uplo
 import axios from 'axios';
 import router from '../../../router';
 import { useTaskStore } from '../../../stores/store';
-import { useCollapseStore } from '../../../stores/store';
+import { useCollapseStore, useWebSocketStore } from '../../../stores/store';
 import { init } from '../../../utils/ws';
 
-const basicData = JSON.parse(`${localStorage.getItem('basic-data')}`);
+const basicData = JSON.parse(`${localStorage.getItem('adminBasicData')}`);
 
+const webSocketStore = useWebSocketStore();
 const collapse = useCollapseStore();
 const taskStore = useTaskStore();
 
 /* 全局变量 */
-const wsDsp = init(`/ws/admin/approval`);
+var wsDsp: any = null;
 const currentRole = ref();
 const currentRoleTask = ref();
 // const applyStore = useApplyStore();
-const ws = init(`/ws/admin/class-schedule`);
+var ws: any = null;
 const classrooms = ref<{ value: number, label: string }[]>([]); // 实验室
 const semesterList = ref<{ value: number, label: string }[]>([]); // 学期
 const weeks = ref<{ value: number, label: string }[]>([
@@ -206,22 +207,30 @@ const tableRef = ref();
 
 const changeCourseTable = (val: any) => {
 	form.semesterId = val;
-	ws?.send(JSON.stringify({
-		startWeek: form.startWeek,
-		endWeek: form.endWeek,
-		semesterId: form.semesterId,
-		place: form.place,
-	}));
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws?.send(JSON.stringify({
+			startWeek: form.startWeek,
+			endWeek: form.endWeek,
+			semesterId: form.semesterId,
+			place: form.place,
+		}));
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 }
 
 const changePlaceTable = (val: any) => {
 	form.place = val;
-	ws?.send(JSON.stringify({
-		startWeek: form.startWeek,
-		endWeek: form.endWeek,
-		semesterId: form.semesterId,
-		place: form.place,
-	}));
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws?.send(JSON.stringify({
+			startWeek: form.startWeek,
+			endWeek: form.endWeek,
+			semesterId: form.semesterId,
+			place: form.place,
+		}));
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 }
 
 const changeStartWeek = (val: any) => {
@@ -230,12 +239,16 @@ const changeStartWeek = (val: any) => {
 		return;
 	}
 	form.startWeek = val;
-	ws?.send(JSON.stringify({
-		startWeek: form.startWeek,
-		endWeek: form.endWeek,
-		semesterId: form.semesterId,
-		place: form.place,
-	}));
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws?.send(JSON.stringify({
+			startWeek: form.startWeek,
+			endWeek: form.endWeek,
+			semesterId: form.semesterId,
+			place: form.place,
+		}));
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 }
 
 const changeEndWeek = (val: any) => {
@@ -244,12 +257,16 @@ const changeEndWeek = (val: any) => {
 		return;
 	}
 	form.endWeek = val;
-	ws?.send(JSON.stringify({
-		startWeek: form.startWeek,
-		endWeek: form.endWeek,
-		semesterId: form.semesterId,
-		place: form.place,
-	}));
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws?.send(JSON.stringify({
+			startWeek: form.startWeek,
+			endWeek: form.endWeek,
+			semesterId: form.semesterId,
+			place: form.place,
+		}));
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 }
 
 const taskLen = (data: any, role: number) => {
@@ -298,11 +315,8 @@ const combinedWeekAndSection = (week: string) => {
 	return `(${week}周)`;
 }
 
-ws.onmessage = async (e: any) => {
-	if (e.data === 'heartbeat') {
-		ws?.send('heartbeatAsk');
-		return;
-	}
+const handleMessage = (data: any) => {
+	webSocketStore.setWsClassScheduleData(data);
 	if (!classrooms.value.length && !semesterList.value.length) {
 		const res = basicData.classrooms;
 		const data = res.data;
@@ -330,7 +344,7 @@ ws.onmessage = async (e: any) => {
 		// console.log(semesterList.value)
 	}
 
-	let dataRes = JSON.parse(e.data).data;
+	let dataRes = JSON.parse(data).data;
 	form.startWeek = dataRes.startWeek;
 	form.endWeek = dataRes.endWeek;
 	form.place = dataRes.place;
@@ -407,39 +421,54 @@ ws.onmessage = async (e: any) => {
 	}
 
 	tableData.value = tempTableData;
-
-	dragTable(tableRef);
+	let timer = setTimeout(() => {
+		dragTable(tableRef);
+		clearTimeout(timer);
+	}, 500);
 }
 
-ws.onerror = (e: any) => {
-	// console.log(e, '1111');
-	if (e.target.readyState === WebSocket.CLOSED) {
-		// console.error('WebSocket connection failed');
-		// 检查响应状态码 模拟握手过程
-		fetch(`/ws/admin/class-schedule`, {
-			headers: {
-				'Sec-WebSocket-Protocol': `${localStorage.getItem('token')}`
-			}
-		}).then(response => {
-			if (response.status === 401) {
-				// console.log('登录已过期，请重新登录');
-				ElMessage.error('NOT_LOGIN');
-				// 提示用户重新登录
-				router.push('/login');
-			} else {
-				// console.log('WebSocket连接失败，请检查网络连接');
-				ElMessage.error('服务器出错，请联系管理员');
-			}
-		});
-	}
-}
+// if(!webSocketStore.wsClassSchedule.ws) {
+ws = init(`/ws/admin/class-schedule`);
+// 	webSocketStore.setWsClassScheduleWs(ws);
+// } else {
+// 	ws = webSocketStore.wsClassSchedule.ws;
+// 	handleMessage(webSocketStore.wsClassSchedule.data);
+// }
 
-wsDsp.onmessage = (e: any) => {
+ws.onmessage = async (e: any) => {
 	if (e.data === 'heartbeat') {
-		wsDsp?.send('heartbeatAsk');
+		ws?.send('heartbeatAsk');
 		return;
 	}
-	let resData = JSON.parse(e.data).data;
+	handleMessage(e.data);
+}
+
+// ws.onerror = (e: any) => {
+// 	// console.log(e, '1111');
+// 	if (e.target.readyState === WebSocket.CLOSED) {
+// 		// console.error('WebSocket connection failed');
+// 		// 检查响应状态码 模拟握手过程
+// 		fetch(`/ws/admin/class-schedule`, {
+// 			headers: {
+// 				'Sec-WebSocket-Protocol': `${localStorage.getItem('token')}`
+// 			}
+// 		}).then(response => {
+// 			if (response.status === 401) {
+// 				// console.log('登录已过期，请重新登录');
+// 				ElMessage.error('NOT_LOGIN');
+// 				// 提示用户重新登录
+// 				router.push('/login');
+// 			} else {
+// 				// console.log('WebSocket连接失败，请检查网络连接');
+// 				ElMessage.error('服务器出错，请联系管理员');
+// 			}
+// 		});
+// 	}
+// }
+
+const handleMessageSp = (data: any) => {
+	webSocketStore.setWsSpData(data);
+	let resData = JSON.parse(data).data;
 	if (!currentRole.value) {
 		currentRole.value = resData.role;
 		currentRoleTask.value = taskLen(resData.result, currentRole.value);
@@ -462,27 +491,42 @@ wsDsp.onmessage = (e: any) => {
 		}
 	});
 }
+// if(!webSocketStore.wsSp.ws) {
+wsDsp = init(`/ws/admin/approval`);
+// 	webSocketStore.setWsSpWs(wsDsp);
+// } else {
+// 	wsDsp = webSocketStore.wsSp.ws;
+// 	handleMessageSp(webSocketStore.wsSp.data);
+// }
 
-wsDsp.onerror = (e: any) => {
-	if (e.target.readyState === WebSocket.CLOSED) {
-		// 检查响应状态码
-		fetch(`/ws/admin/approval`, {
-			headers: {
-				'Sec-WebSocket-Protocol': `${localStorage.getItem('token')}`
-			}
-		}).then(response => {
-			if (response.status === 401) {
-				ElMessage.error('NOT_LOGIN');
-				// 提示用户重新登录
-				nextTick(() => {
-					router.push('/login');
-				});
-			} else {
-				ElMessage.error('服务器出错，请联系管理员');
-			}
-		});
+wsDsp.onmessage = (e: any) => {
+	if (e.data === 'heartbeat') {
+		wsDsp?.send('heartbeatAsk');
+		return;
 	}
+	handleMessageSp(e.data);
 }
+
+// wsDsp.onerror = (e: any) => {
+// 	if (e.target.readyState === WebSocket.CLOSED) {
+// 		// 检查响应状态码
+// 		fetch(`/ws/admin/approval`, {
+// 			headers: {
+// 				'Sec-WebSocket-Protocol': `${localStorage.getItem('token')}`
+// 			}
+// 		}).then(response => {
+// 			if (response.status === 401) {
+// 				ElMessage.error('NOT_LOGIN');
+// 				// 提示用户重新登录
+// 				nextTick(() => {
+// 					router.push('/login');
+// 				});
+// 			} else {
+// 				ElMessage.error('服务器出错，请联系管理员');
+// 			}
+// 		});
+// 	}
+// }
 
 
 /* 文件上传限制 */
@@ -518,19 +562,24 @@ const submitUploadClassSchedule = async () => {
 		uploadClassSchedule.value!.clearFiles();
 		if (data.code === 1) {
 			ElMessage.success('上传成功');
-			await axios.get('/api/admin/class-time/classrooms').then(res => {
-				classrooms.value = res.data.data.map((item: any) => {
-					return {
-						value: item.id,
-						label: item.name,
-					};
-				});
+			const classroomRes = await axios.get('/api/admin/class-time/classrooms');
+			const semesterRes = await axios.get('/api/admin/class-time/semesters');
+			localStorage.setItem('basic-data', JSON.stringify({ 'classrooms': classroomRes.data, 'semesters': semesterRes.data }));
+			classrooms.value = classroomRes.data.data.map((item: any) => {
+				return {
+					value: item.id,
+					label: item.name,
+				};
 			});
-			ws?.send(JSON.stringify({
-				startWeek: form.startWeek,
-				endWeek: form.endWeek,
-				semesterId: form.semesterId,
-			}));
+			if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+				ws?.send(JSON.stringify({
+					startWeek: form.startWeek,
+					endWeek: form.endWeek,
+					semesterId: form.semesterId,
+				}));
+			} else {
+				ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+			}
 		} else {
 			ElMessage.error(data.msg);
 		}
@@ -567,9 +616,10 @@ const dialogFormConfirm = async () => {
 			ElMessage.error(data.msg);
 		} else {
 			uploadCommencementPlan.value!.clearFiles();
+			const classroomRes = await axios.get('/api/admin/class-time/classrooms');
 			const semesterRes = await axios.get('/api/admin/class-time/semesters');
-			const semesterData = semesterRes.data.data;
-			semesterList.value = semesterData.map((item: any) => {
+			localStorage.setItem('basic-data', JSON.stringify({ 'classrooms': classroomRes.data, 'semesters': semesterRes.data }));
+			semesterList.value = semesterRes.data.data.map((item: any) => {
 				return {
 					value: item.id,
 					label: item.startYear + '-' + item.endYear + '-' + item.stage,
@@ -637,34 +687,34 @@ const exportAsExcel = () => {
 	})//此处tableData.value为表格的数据
 
 	const rowHeights = [
-		{ hpx: 30 },
+		{ hpx: 20 },
 		{ hpx: 20 },
 		{ hpx: 20 },
 	];
 	for (let i = 3; i < rc.length - 1; ++i) {
-		rowHeights.push({ hpx: 100 });
+		rowHeights.push({ hpx: 105 });
 	}
 	rowHeights.push({ hpx: 20 });
 	data['!rows'] = rowHeights;
 
-	const colWidths = new Array(36).fill({ wch: 7.5 }); // 假设有36列，每列初始宽度为20
+	const colWidths = new Array(36).fill({ wch: 4.47 }); // 假设有36列，每列初始宽度为20
 
-	for (let j = 1; j < 36; j++) {
-		let flag = 0;
-		for (let i = 3; i < rc.length - 1; i++) {
-			const cell = data[XLSX.utils.encode_cell({ r: i, c: j })];
-			if (cell && cell.v !== ' ') {
-				// 如果单元格不为空，增加列宽
-				flag++;
-			}
-			// console.log(cell);
-		}
-		// 如果单元格为空，减小列宽
-		if (flag == 0) {
-			colWidths[j] = { wch: Math.min(colWidths[j].wch, 2.5) };
-		}
-		// console.log(flag);
-	}
+	// for (let j = 1; j < 36; j++) {
+	// 	let flag = 0;
+	// 	for (let i = 3; i < rc.length - 1; i++) {
+	// 		const cell = data[XLSX.utils.encode_cell({ r: i, c: j })];
+	// 		if (cell && cell.v !== ' ') {
+	// 			// 如果单元格不为空，增加列宽
+	// 			flag++;
+	// 		}
+	// 		// console.log(cell);
+	// 	}
+	// 	// 如果单元格为空，减小列宽
+	// 	if (flag == 0) {
+	// 		colWidths[j] = { wch: Math.min(colWidths[j].wch, 2.5) };
+	// 	}
+	// 	// console.log(flag);
+	// }
 
 	data['!cols'] = colWidths;
 
@@ -708,7 +758,19 @@ const exportAsExcel = () => {
 		}
 
 		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, data, `${form.place} 课表`); // test-data为自定义的sheet表名
+		XLSX.utils.book_append_sheet(wb, data, `sheet1`); // test-data为自定义的sheet表名
+		wb.Sheets['sheet1']['!margins'] = {
+			left: 0.1185,
+			right: 0.1185,
+			top: 0.393,
+			bottom: 0.393,
+			header: 0.3,
+			footer: 0.3
+		};
+		wb.Sheets['sheet1']['!pageSetup'] = {
+			paperSize: 9,             // 纸张大小（9表示A4纸）
+			orientation: 'landscape', // 页面方向（portrait或landscape）
+		};
 		XLSX.writeFile(wb, `${form.place}课表 ${semesterList.value[form.semesterId - 1].label}.xlsx`); // test.xlsx为自定义的文件名
 	}
 }
@@ -720,4 +782,5 @@ onBeforeUnmount(() => {
 
 </script>
 
-<style scoped></style>
+<style scoped>
+</style>

@@ -154,6 +154,13 @@
             <version>2.11.0</version>
         </dependency>
 
+        <!-- security bcrypt加密 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+
     </dependencies>
 
     <build>

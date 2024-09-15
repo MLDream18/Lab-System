@@ -1,7 +1,7 @@
 <template>
 	<el-main class="main"
 		:style="{ 'margin-left': !collapse.isAdminCollapse ? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)' }">
-		<div style="width: 20%; height: auto; background-color: white; margin-bottom: 1.5%;">
+		<div style="width: 20%; height: auto; margin-bottom: 1.5%;">
 			<el-segmented v-model="defaultOption" :options="options" block @change="changeOption"
 				style="background-color: white;" />
 		</div>
@@ -46,7 +46,6 @@
 					:header-cell-style="{ 'text-align': 'center', 'background-color': 'white', 'color': 'black', 'width': '1vw' }"
 					:row-style="{ 'fontSize': '15px', 'textAlign': 'center', 'width': '10px' }"
 					:row-class-name="tableRowClassName">
-					<el-table-column type="index" label="序号" width="70%" />
 					<el-table-column type="expand">
 						<template #default="props">
 							<div>
@@ -139,6 +138,7 @@
 							</div>
 						</template>
 					</el-table-column>
+					<el-table-column type="index" label="序号" width="70%" />
 					<el-table-column label="提交日期" prop="submitDate" />
 					<el-table-column label="申请人姓名" prop="applicant" />
 					<el-table-column label="申请实验室" prop="labName" />
@@ -175,11 +175,12 @@ import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
 import PizZip from 'pizzip';
 import * as XLSX from 'xlsx-js-style';
-import { useCollapseStore } from '../../../stores/store';
+import { useCollapseStore, useWebSocketStore } from '../../../stores/store';
 import { init } from '../../../utils/ws';
 
-const basicData = JSON.parse(`${localStorage.getItem('basic-data')}`);
+const basicData = JSON.parse(`${localStorage.getItem('adminBasicData')}`);
 
+const webSocketStore = useWebSocketStore();
 const collapse = useCollapseStore();
 
 const defaultOption = ref('审批记录');
@@ -190,7 +191,7 @@ const changeOption = () => {
 
 // const parentBorder = ref(false)
 // const childBorder = ref(false)
-const ws = init(`/ws/admin/approval/record`);// 建立WebSocket连接, 监听是否有申请
+var ws: any = null;
 // const bc = new BroadcastChannel('teacher-apply'); // 建立广播通道
 const tableRef = ref<any>();
 const dspApplyInfo = ref<any[]>([]);
@@ -264,8 +265,8 @@ const exportApplyTable = async () => {
 		usedTime: currentRow.value.usedTime,
 		applyReason: states[currentRow.value.applyReason],
 		experimentContent: currentRow.value.experimentContent,
-		courseName: currentRow.value.courseName,
-		className: currentRow.value.className,
+		courseName: currentRow.value.courseName || '无',
+		className: currentRow.value.className || '无',
 		experimentPeople: currentRow.value.experimentPeople,
 		unitOpinion: currentRow.value.unitOpinion,
 		approvalOpinion: currentRow.value.approvalOpinion,
@@ -379,11 +380,15 @@ const timeLineClass = (state: number, index: number) => {
 }
 
 const submitForm = async () => {
-	ws?.send(JSON.stringify({
-		pageSize: pageSize.value,
-		currentPage: currentPage.value,
-		form: form,
-	}));
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws?.send(JSON.stringify({
+			pageSize: pageSize.value,
+			currentPage: currentPage.value,
+			form: form,
+		}));
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 }
 const resetForm = () => {
 	form.labName = null;
@@ -410,12 +415,9 @@ const combinedWeekAndSection = (week: string, section: string) => {
 	return `周次：${week} 节次：${section}`;
 }
 
-ws.onmessage = (e: any) => {
-	if (e.data === 'heartbeat') {
-		ws?.send('heartbeatAsk');
-		return;
-	}
-	let dspApplyInfoData = JSON.parse(e.data).data;
+const handleMessage = (data: any) => {
+	webSocketStore.setWsRecordData(data);
+	let dspApplyInfoData = JSON.parse(data).data;
 	// console.log(dspApplyInfoData);
 	if (dspApplyInfoData) {
 		dspApplyInfo.value = dspApplyInfoData.rows.filter((item: any) => {
@@ -436,28 +438,44 @@ ws.onmessage = (e: any) => {
 	}
 }
 
-ws.onerror = async (e: any) => {
-	// console.log(e, '1111');
-	if (e.target.readyState === WebSocket.CLOSED) {
-		// console.error('WebSocket connection failed');
-		// 检查响应状态码 模拟握手过程
-		fetch(`/ws/admin/approval/record`, {
-			headers: {
-				'Sec-WebSocket-Protocol': `${localStorage.getItem('token')}`
-			}
-		}).then(response => {
-			if (response.status === 401) {
-				// console.log('登录已过期，请重新登录');
-				ElMessage.error('NOT_LOGIN');
-				// 提示用户重新登录
-				router.push('/login');
-			} else {
-				// console.log('WebSocket连接失败，请检查网络连接');
-				ElMessage.error('服务器出错，请联系管理员');
-			}
-		});
+// if(!webSocketStore.wsRecord.ws) {
+ws = init(`/ws/admin/approval/record`); // 建立WebSocket连接
+// 	webSocketStore.setWsRecordWs(ws);
+// } else {
+// 	ws = webSocketStore.wsRecord.ws;
+// 	handleMessage(webSocketStore.wsRecord.data);
+// }
+
+ws.onmessage = (e: any) => {
+	if (e.data === 'heartbeat') {
+		ws?.send('heartbeatAsk');
+		return;
 	}
+	handleMessage(e.data);
 }
+
+// ws.onerror = async (e: any) => {
+// 	// console.log(e, '1111');
+// 	if (e.target.readyState === WebSocket.CLOSED) {
+// 		// console.error('WebSocket connection failed');
+// 		// 检查响应状态码 模拟握手过程
+// 		fetch(`/ws/admin/approval/record`, {
+// 			headers: {
+// 				'Sec-WebSocket-Protocol': `${localStorage.getItem('token')}`
+// 			}
+// 		}).then(response => {
+// 			if (response.status === 401) {
+// 				// console.log('登录已过期，请重新登录');
+// 				ElMessage.error('NOT_LOGIN');
+// 				// 提示用户重新登录
+// 				router.push('/login');
+// 			} else {
+// 				// console.log('WebSocket连接失败，请检查网络连接');
+// 				ElMessage.error('服务器出错，请联系管理员');
+// 			}
+// 		});
+// 	}
+// }
 
 
 const exportLabRegisterTable = async () => {

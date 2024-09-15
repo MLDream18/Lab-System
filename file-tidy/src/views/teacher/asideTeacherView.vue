@@ -1,14 +1,14 @@
 <template>
     <el-aside class="aside"
-        :style="{ 'width': !collapse.isCollapse ? '10%' : '3.5%', 'height': '100%', 'background-color': '#303133', 'position': 'fixed', }">
-        <el-menu :style="{ 'width': 'calc(100% + 1px)' }" background-color="#303133" :default-active="deactivate"
-            active-text-color="black" text-color="#fff" :collapse="collapse.isCollapse" :collapse-transition="false">
-            <div @click="changeMenu('1')">
-                <el-menu-item index="1">
-                    <div v-if="deactivate === '1'"
-                        style="display: inline-flex; justify-content: center; align-items: center;
-								width: auto; height: 50%; padding: 2.5%; border: 1px solid white; border-radius: 10px; background-color: white;">
-                        <el-icon style="margin-left: 3px;" size="25">
+        :style="{ 'width': !collapse.isCollapse ? '10%' : '3.5%', 'height': '100%', 'background': 'radial-gradient(ellipse at bottom, rgb(229, 239, 253) 0%, rgb(204, 224, 247) 100%)', 'position': 'fixed' }">
+        <el-menu
+            :style="{ 'width': 'calc(100% + 1px)', 'background': 'radial-gradient(ellipse at bottom, rgb(229, 239, 253) 0%, rgb(204, 224, 247) 100%)', }"
+            :default-active="deactivate" active-text-color="white" text-color="rgb(56, 73, 148)" :collapse="collapse.isCollapse"
+            :collapse-transition="false">
+            <div @click="changeMenu('1')" class="menu-item">
+                <el-menu-item index="1" :style="{'background': deactivate === '1' ? 'rgb(125, 149, 255)' :  'white', 'color': deactivate === '1' ? 'white' : 'rgb(56, 73, 148)', }">
+                    <div v-if="deactivate === '1'">
+                        <el-icon :style="{'margin-left': collapse.isCollapse ? '25%' : '0%'}" size="25">
                             <EditPen />
                         </el-icon>
                         <span style="font-weight: bold;" v-if="!collapse.isCollapse">
@@ -16,7 +16,7 @@
                         </span>
                     </div>
                     <div v-else>
-                        <el-icon style="margin-left: 3px;" size="25">
+                        <el-icon :style="{'margin-left': collapse.isCollapse ? '25%' : '0%'}" size="25">
                             <EditPen />
                         </el-icon>
                         <span style="font-weight: bold;" v-if="!collapse.isCollapse">
@@ -25,12 +25,10 @@
                     </div>
                 </el-menu-item>
             </div>
-            <div @click="changeMenu('2')">
-                <el-menu-item index="2">
-                    <div v-if="deactivate === '2'"
-                        style="display: inline-flex; justify-content: center; align-items: center;
-								width: auto; height: 50%; padding: 2.5%; border: 1px solid white; border-radius: 10px; background-color: white;">
-                        <el-icon style="margin-left: 3px;" size="25">
+            <div @click="changeMenu('2')" class="menu-item">
+                <el-menu-item index="2" :style="{'background': deactivate === '2' ? 'rgb(125, 149, 255)' :  'white', 'color': deactivate === '2' ? 'white' : 'rgb(56, 73, 148)', }">
+                    <div v-if="deactivate === '2'">
+                        <el-icon :style="{'margin-left': collapse.isCollapse ? '25%' : '0%'}" size="25">
                             <School />
                         </el-icon>
                         <span style="font-weight: bold;" v-if="!collapse.isCollapse">
@@ -38,7 +36,7 @@
                         </span>
                     </div>
                     <div v-else>
-                        <el-icon style="margin-left: 3px;" size="25">
+                        <el-icon :style="{'margin-left': collapse.isCollapse ? '25%' : '0%'}" size="25">
                             <School />
                         </el-icon>
                         <span style="font-weight: bold;" v-if="!collapse.isCollapse">
@@ -47,12 +45,10 @@
                     </div>
                 </el-menu-item>
             </div>
-            <div @click="changeMenu('3')">
-                <el-menu-item index="3">
-                    <div v-if="deactivate === '3'"
-                        style="display: inline-flex; justify-content: center; align-items: center;
-								width: auto; height: 50%; padding: 2.5%; border: 1px solid white; border-radius: 10px; background-color: white;">
-                        <el-icon style="margin-left: 3px;" size="25">
+            <div @click="changeMenu('3')" class="menu-item">
+                <el-menu-item index="3" :style="{'background': deactivate === '3' ? 'rgb(125, 149, 255)' :  'white', 'color': deactivate === '3' ? 'white' : 'rgb(56, 73, 148)', }">
+                    <div v-if="deactivate === '3'">
+                        <el-icon :style="{'margin-left': collapse.isCollapse ? '25%' : '0%'}" size="25">
                             <List />
                         </el-icon>
                         <span style="font-weight: bold;" v-if="!collapse.isCollapse">
@@ -60,7 +56,7 @@
                         </span>
                     </div>
                     <div v-else>
-                        <el-icon style="margin-left: 3px;" size="25">
+                        <el-icon :style="{'margin-left': collapse.isCollapse ? '25%' : '0%'}" size="25">
                             <List />
                         </el-icon>
                         <span style="font-weight: bold;" v-if="!collapse.isCollapse">
@@ -69,12 +65,10 @@
                     </div>
                 </el-menu-item>
             </div>
-            <div @click="changeMenu('4')">
-                <el-menu-item index="4">
-                    <div v-if="deactivate === '4'"
-                        style="display: inline-flex; justify-content: center; align-items: center;
-								width: auto; height: 50%; padding: 2.5%; border: 1px solid white; border-radius: 10px; background-color: white;">
-                        <el-icon style="margin-left: 3px;" size="25">
+            <div @click="changeMenu('4')" class="menu-item">
+                <el-menu-item index="4" :style="{'background': deactivate === '4' ? 'rgb(125, 149, 255)' :  'white', 'color': deactivate === '4' ? 'white' : 'rgb(56, 73, 148)', }">
+                    <div v-if="deactivate === '4'">
+                        <el-icon :style="{'margin-left': collapse.isCollapse ? '25%' : '0%'}" size="25">
                             <Promotion />
                         </el-icon>
                         <span style="font-weight: bold;" v-if="!collapse.isCollapse">
@@ -82,7 +76,7 @@
                         </span>
                     </div>
                     <div v-else>
-                        <el-icon style="margin-left: 3px;" size="25">
+                        <el-icon :style="{'margin-left': collapse.isCollapse ? '25%' : '0%'}" size="25">
                             <Promotion />
                         </el-icon>
                         <span style="font-weight: bold;" v-if="!collapse.isCollapse">
@@ -92,8 +86,8 @@
                 </el-menu-item>
             </div>
         </el-menu>
-        <el-icon size="30" style="width: 30px; cursor: pointer; border: 1px solid white; border-radius: 10px;" color="white"
-            @click="collapse.flipCollapse">
+        <el-icon size="30" style="width: 30px; cursor: pointer;"
+            color="rgb(125, 149, 255)" @click="collapse.flipCollapse">
             <Fold v-if="!collapse.isCollapse" />
             <Expand v-if="collapse.isCollapse" />
         </el-icon>
@@ -109,14 +103,6 @@ import router from '../../router';
 
 const collapse = useCollapseStore();
 const deactivate = ref('2');
-
-router.beforeEach((to, _from, next) => {
-    if (to.path === '/404' || to.path === '/login' || to.path === '/register' || to.path === '/' || (to.name?.toString().includes('admin') && `${localStorage.getItem('role')}` === 'admin') || (to.name?.toString().includes('teacher') && `${localStorage.getItem('role')}` === 'teacher')) {
-        next();
-    } else {
-        next({ path: '/404' });
-    }
-});
 
 router.afterEach((to, _from) => {
     switch (to.path.toString()) {
@@ -179,3 +165,32 @@ switch (router.currentRoute.value.fullPath) {
 }
 
 </script>
+
+<style lang="scss" scoped>
+.menu-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.menu-item .el-menu-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 90%;
+    padding: 2.5%;
+    border: 1px solid white;
+    border-radius: 10px;
+    background-color: white;
+}
+
+.menu-item .el-menu-item div {
+    width: 100%;
+}
+
+.menu-item .el-menu-item:hover {
+    background: rgb(125, 149, 255) !important;
+    color: rgb(0, 88, 167) !important;
+}
+</style>

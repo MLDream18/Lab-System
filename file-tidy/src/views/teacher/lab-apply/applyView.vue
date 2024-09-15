@@ -1,8 +1,8 @@
 <template>
 	<el-main class="main" :style="{'margin-left': !collapse.isCollapse? '10%' : '3.5%', 'height': '100%', 'background-color': 'rgb(243, 244, 247)'}">
 		<div
-			style="width: 50%; height: auto; background-color: white; margin-bottom: 1.5%;">
-			<el-segmented v-model="form.place" :options="placeList" block @change="changePlace" style="background-color: white;" />
+			style="width: 50%; height: auto; margin-bottom: 1.5%;">
+			<el-segmented v-model="form.place" :options="placeList" block @change="changePlace" style="background-color: white; color: rgb(144, 155, 206);" />
 		</div>
 		<div
 			style="width: auto; height: auto; background-color: white; padding: 2.5%; margin-bottom: 3%; border-radius: 10px;">
@@ -86,31 +86,31 @@
 			</div>
 		</div>
 		<el-dialog title="实验室使用详情" draggable v-model="detailDialogVisible" width="50%">
-			<!-- <el-scrollbar height="400px"> -->
+			<el-scrollbar height="400px">
 				<div v-for="(item, index) in classTimeData" :key="index" style="width: 100%;">
 					<el-descriptions title="课程信息" border :column="1" style="margin-bottom: 20px; width: 70%;">
-						<el-descriptions-item label-align="right" label="🖳 实验室名称：" width="15%">
+						<el-descriptions-item label-align="left" label="🖳 实验室名称：" width="15%">
 							{{ item.labName }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="课程名称：">
+						<el-descriptions-item label-align="left" label="课程名称：">
 							{{ item.courseName }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="教师名称：">
+						<el-descriptions-item label-align="left" label="教师名称：">
 							{{ item.teacherName }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="节次：">
+						<el-descriptions-item label-align="left" label="节次：">
 							{{ item.weekdaySection }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="󠁚󠁚󠁚周次：">
+						<el-descriptions-item label-align="left" label="󠁚󠁚󠁚周次：">
 							{{ item.startEndWeek }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="班级：">
+						<el-descriptions-item label-align="left" label="班级：">
 							{{ item.className }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="课程性质：">
+						<el-descriptions-item label-align="left" label="课程性质：">
 							{{ item.courseNature }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="总课时：">
+						<el-descriptions-item label-align="left" label="总课时：">
 							{{ item.sumCourseHour }}
 						</el-descriptions-item>
 					</el-descriptions>
@@ -118,37 +118,37 @@
 				</div>
 				<div v-for="(item, index) in applyFormData" :key="index" style="width: 100%;">
 					<el-descriptions title="申请信息" border :column="1" style="margin-bottom: 20px; width: 70%;">
-						<el-descriptions-item label-align="right" label="🖳 实验室名称：" width="15%">
+						<el-descriptions-item label-align="left" label="🖳 实验室名称：" width="15%">
 							{{ item.labName }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="实验内容：">
+						<el-descriptions-item label-align="left" label="实验内容：">
 							{{ item.experimentContent }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="实验课程：">
+						<el-descriptions-item label-align="left" label="实验课程：">
 							{{ item.courseName }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="实验班级：">
+						<el-descriptions-item label-align="left" label="实验班级：">
 							{{ item.className }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="实验人数：">
+						<el-descriptions-item label-align="left" label="实验人数：">
 							{{ item.experimentPeople }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="申请人：">
+						<el-descriptions-item label-align="left" label="申请人：">
 							{{ item.applicant }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="使用时间：">
+						<el-descriptions-item label-align="left" label="使用时间：">
 							{{ item.usedTime }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="学院：">
+						<el-descriptions-item label-align="left" label="学院：">
 							{{ item.applicantCollege }}
 						</el-descriptions-item>
-						<el-descriptions-item label-align="right" label="申请事由：">
+						<el-descriptions-item label-align="left" label="申请事由：">
 							{{ states[item.applyReason].label }}
 						</el-descriptions-item>
 					</el-descriptions>
 					<el-divider />
 				</div>
-			<!-- </el-scrollbar> -->
+			</el-scrollbar>
 		</el-dialog>
 
 	</el-main>
@@ -158,18 +158,18 @@
 // import useApplyStore from '../../stores/store';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
-import { onMounted, reactive, ref } from 'vue';
+import { onBeforeUnmount, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router'
 import { dragTable } from '../../../utils/common';
-import { useCollapseStore } from '../../../stores/store';
+import { useCollapseStore, useWebSocketStoreTeacher } from '../../../stores/store';
+import { init } from '../../../utils/ws';
 
-const basicData = JSON.parse(`${localStorage.getItem('basic-data')}`);
-
+const basicData = JSON.parse(`${localStorage.getItem('teacherBasicData')}`);
+const webSocketStore = useWebSocketStoreTeacher();
 const collapse = useCollapseStore();
 
 // const applyStore = useApplyStore();
-const token = `${localStorage.getItem('token')}`;
-var ws = new WebSocket(`/ws/teacher/apply`, [token]); // 建立websocket连接
+var ws: any = null;
 const classrooms = ref<{ value: number, label: string }[]>([]); // 实验室
 const semesterList = ref<{ value: number, label: string }[]>([]); // 学期
 const weeks = ref<{ value: number, label: string }[]>([
@@ -311,7 +311,7 @@ const combinedWeekAndSection = (week: string, section: string) => {
 		// console.log(weeks, sections);
 		let result = '';
 		for (let i = 0; i < weeks.length - 1; ++i) {
-			result += `${weeks[i]}：${sections[i]}`;
+			result += `周次：${weeks[i]} 节次：${sections[i]}`;
 			if (i !== weeks.length - 2) {
 				result += '；';
 			}
@@ -321,13 +321,34 @@ const combinedWeekAndSection = (week: string, section: string) => {
 	return `${week}:${section}`;
 }
 
-ws.onmessage = (e: any) => {
-	if (e.data === 'heartbeat') {
-		ws.send('heartbeatAsk');
-		return;
+const handleMessage = (data: any) => {
+	webSocketStore.setWsClassScheduleData(data);
+
+	if(!classrooms.value.length) {
+		const res = basicData.placeLabs;
+		const dataRes = res.data;
+		classrooms.value = dataRes.map((item: any) => {
+			return {
+					'value': item.id,
+					'label': item.name,
+				}	
+			});
 	}
 
-	labSources.value = JSON.parse(e.data).data;
+	if(!semesterList.value.length) {
+		const semesterRes = basicData.semesters;
+		const semesterData = semesterRes.data;
+		
+		semesterList.value = semesterData.map((item: any) => {
+			return {
+				value: item.id,
+				label: item.startYear + '-' + item.endYear + '-' + item.stage,
+			}
+		});
+		form.semesterId = semesterList.value[semesterList.value.length - 1].value;
+	}
+
+	labSources.value = JSON.parse(data).data;
 	// console.log(labSources.value.filter((item: any) => {
 	// 	return item.labId === 1 && item.weekday === 4 && item.section === '0102';
 	// }))
@@ -372,9 +393,10 @@ ws.onmessage = (e: any) => {
 			});
 		}
 		tableHeader.value[1].children.at(-1).children = tmp;
+		// console.log(tableHeader.value[1].children.at(-1).children);
 	}
 
-	// console.log(tableHeader.value);
+	console.log(tableHeader.value);
 
 	/* 初始化表格字段名 */
 	if (!form.labId) {
@@ -422,11 +444,32 @@ ws.onmessage = (e: any) => {
 			});
 		}
 	}
+	let timer = setTimeout(() => {
+		dragTable(tableRef);
+		clearTimeout(timer);
+	}, 500);
+}
 
-	dragTable(tableRef);
+// if(!webSocketStore.wsClassSchedule.ws) {
+ws = init(`/ws/teacher/apply`); // 建立websocket连接
+// 	webSocketStore.setWsClassScheduleWs(ws);
+// } else {
+// 	ws = webSocketStore.wsClassSchedule.ws;
+// 	handleMessage(webSocketStore.wsClassSchedule.data);
+// }
+
+ws.onmessage = (e: any) => {
+	if (e.data === 'heartbeat') {
+		ws.send('heartbeatAsk');
+		return;
+	}
+	console.log(e.data);
+	
+	handleMessage(e.data);
 }
 
 const submitForm = async () => {
+	console.log(tableRef.value)
 	if (form.endWeek < form.startWeek) {
 		ElMessage.error('开始周不能大于结束周！');
 		return;
@@ -451,13 +494,16 @@ const submitForm = async () => {
 		'state': form.state,
 		'semesterId': form.semesterId,
 	};
-
-	ws.send(JSON.stringify(formData));
+	if(ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+		ws.send(JSON.stringify(formData));
+	} else {
+		ElMessage.error('WebSocket连接已断开，刷新页面尝试重新连接');
+	}
 };
 
 /* 双击表格事件 */
 const handleCellDblclick = async (row: any, column: any, _cell: any, _event: any) => {
-	// console.log(column.columnKey)
+	// console.log(column.property)
 	if (!column.columnKey) {
 		return;
 	}
@@ -471,9 +517,9 @@ const handleCellDblclick = async (row: any, column: any, _cell: any, _event: any
 	// console.log(column.columnKey);
 	// console.log(idMap.value[`${getLabId(row.room)}${column.columnKey}`]);
 	// idMap[`${getLabId(row.room)}${column.columnKey}`] 对应的是申请表id: applyFormId 课表id: classTimeId
-	if (idMap.value[`${getLabId(row.room)}${column.columnKey}`]) {
-		idsClassTime.value = idMap.value[`${getLabId(row.room)}${column.columnKey}`].filter((item: any) => { if (item.classTimeId) { return item } }).map((item: any) => { return { id: item.classTimeId } });
-		idsApplyForm.value = idMap.value[`${getLabId(row.room)}${column.columnKey}`].filter((item: any) => { if (item.applyFormId) { return item } }).map((item: any) => { return { id: item.applyFormId } });
+	if (idMap.value[`${getLabId(row.room)}${column.property}`]) {
+		idsClassTime.value = idMap.value[`${getLabId(row.room)}${column.property}`].filter((item: any) => { if (item.classTimeId) { return item } }).map((item: any) => { return { id: item.classTimeId } });
+		idsApplyForm.value = idMap.value[`${getLabId(row.room)}${column.property}`].filter((item: any) => { if (item.applyFormId) { return item } }).map((item: any) => { return { id: item.applyFormId } });
 	}
 	// console.log(idsClassTime.value);
 	// console.log(idsApplyForm.value);
@@ -501,7 +547,7 @@ const handleCellDblclick = async (row: any, column: any, _cell: any, _event: any
 			name: 'teacher-applyFill',
 			query: {
 				labName: row.room,
-				weekdaySection: column.columnKey,
+				weekdaySection: column.property,
 				week: `${form.startWeek}-${form.endWeek}`,
 				semesterId: form.semesterId,
 			},
@@ -534,58 +580,21 @@ const resetForm = () => {
 	submitForm();
 };
 
-ws.onerror = (e: any) => {
-	// console.log(e, '1111');
-	if (e.target.readyState === WebSocket.CLOSED) {
-		// console.error('WebSocket connection failed');
-		// 检查响应状态码 模拟握手过程
-		fetch(`/ws/teacher/apply`, {
-			headers: {
-				'Sec-WebSocket-Protocol': token
-			}
-		}).then(response => {
-			if (response.status === 401) {
-				// console.log('登录已过期，请重新登录');
-				ElMessage.error('NOT_LOGIN');
-				// 提示用户重新登录
-				router.push('/login');
-			} else {
-				// console.log('WebSocket连接失败，请检查网络连接');
-				ElMessage.error('服务器出错，请联系管理员');
-			}
-		});
-	}
-}
-
-onMounted(async () => {
-	const res = basicData.placeLabs;
-	const data = res.data;
-	// console.log(data);
-	data.forEach((item: any) => {
-		classrooms.value.push({
-			'value': item.id,
-			'label': item.name,
-		});
-	});
-
-	const semesterRes = basicData.semesters;
-	const semesterData = semesterRes.data;
-	semesterList.value = semesterData.map((item: any) => {
-		return {
-			value: item.id,
-			label: item.startYear + '-' + item.endYear + '-' + item.stage,
-		}
-	});
-	form.semesterId = semesterList.value[semesterList.value.length - 1].value;
-});
+// ws.onerror = (e: any) => {
+// 	console.log(e);
+// }
 
 /* 路由跳转前将websocket关闭 */
-router.beforeEach((_to, _from, next) => {
-	ws.close();
-	next();
+// router.beforeEach((_to, _from, next) => {
+// 	ws.close();
+// 	next();
+// });
+onBeforeUnmount(() => {
+	ws?.close();
 });
-
 
 </script>
 
-<style></style>
+<style scoped>
+	
+</style>
